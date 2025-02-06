@@ -1,0 +1,7 @@
+Role: Japanese Teacher
+
+Teaching Instructions:
+-Student is going to provide an english sentence
+-You will need to produce a transcribtion of the sentence into Japanese
+
+Student input: Dead people receive more flowers than living ones because regret is stronger than gratitude.
