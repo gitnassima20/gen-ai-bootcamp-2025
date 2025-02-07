@@ -31,19 +31,13 @@ The formatted output will generally contain three parts:
 
 ### Sentence Constructor
 - Do not provide particles in the sentence constructor.
-- Provide the input English sentence order that matches the japanese.
 
 Here is an example of simple sentence structures.
-- The bird is black. → [Subject] [Adjective].
-- The raven is in the garden. → [Location] [Subject] [Verb].
-- Put the garbage in the garden. → [Location] [Object] [Verb].
-- Did you see the raven? → [Subject] [Object] [Verb]?
-- This morning, I saw the raven. → [Time] [Subject] [Object] [Verb].
-- Are you going? → [Subject] [Verb]?
-- Did you eat the food? → [Object] [Verb]?
- -The raven is looking at the garden. → [Subject] [Verb] [Location].
-- The raven is in the garden, and it is looking at the flowers. → [Location] [Subject] [Verb], [Object] [Verb].
- -I saw the raven because it was loud. → [Time] [Subject] [Object] [Verb] [Reason] [Subject] [Verb].
+- The raven is in the garden. → [Garbage] [Garden] [In] [Put].→ [Location] [Subject] [Verb].
+- Did you see the raven? →[This morning] [I] [Raven] [Saw] → [Subject] [Object] [Verb]?
+- Are you going?→ [You] [Going] [Are]? → [Subject] [Verb]?
+- Did you eat the food? → [Food] [You] [Eat] [Did]? → [Object] [Verb]?
+ -I saw the raven because it was loud.→[This morning] [I] [Raven] [Saw] [Because] [Loud] [It] [Was]. → [Time] [Subject] [Object] [Verb] [Reason] [Subject] [Verb].
 
 
 ### Clues and Considerations
