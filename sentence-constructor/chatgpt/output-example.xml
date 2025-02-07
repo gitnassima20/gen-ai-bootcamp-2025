@@ -1,0 +1,36 @@
+<example>
+    <user:input>
+        Dead people receive more flowers than living ones because regret is stronger than gratitude.
+    </user:input>
+    <score>7.5</score>
+    <score_reasons>
+     -Good: Mid to good clues
+     -Good: Detailed Strcuture of the Sentence Constructor
+     -Bad: Still included particle (than) in the Vocabulary Table
+    <score_reasons>
+    <assistant:output>
+        Vocabulary Table
+        | Japanese       | Romaji      | English       |
+        |----------------|-------------|---------------|
+        | 死者           | shisha      | dead people   |
+        | 生きている     | ikiteiru    | living        |
+        | 花             | hana        | flower        |
+        | 受け取る       | uketoru     | receive       |
+        | 後悔           | koukai      | regret        |
+        | 感謝           | kansha      | gratitude     |
+        | 強い           | tsuyoi      | strong        |
+        | より           | yori        | than          |
+
+        Sentence Constructor
+        [Dead people] [Receive] [Flowers] [Than] [Living] [People] [Because] [Regret] [Stronger] [Than] [Gratitude].
+
+        → [Subject] [Verb] [Object] [Comparison] [Subject] [Verb] [Reason] [Emotion] [Comparison] [Emotion].
+
+        Clues and Considerations
+        The subject of the first part involves dead people and flowers.
+        The comparison is made between dead people and living people.
+        The reason for this difference is regret being stronger than gratitude.
+        Focus on the correct word for stronger and the tense of receive.
+        The word for receive may change based on the subject.
+    </assistant:output>
+</example>
