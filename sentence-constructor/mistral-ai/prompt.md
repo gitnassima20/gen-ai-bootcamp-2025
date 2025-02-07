@@ -57,7 +57,7 @@ Here are examples of input/output:
     <user:input>
         Dead people receive more flowers than living ones because regret is stronger than gratitude.
     </user:input>
-    <score>10/score>
+    <score>10</score>
     <score_reasons>
     - GOOD: Doesn't provide verbose text at the start, and shows vocabulary immediatly
     - GOOD: Shows conceptual sentence strucutre
