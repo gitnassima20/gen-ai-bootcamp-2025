@@ -1,4 +1,4 @@
-1. Functional Requirements:
+## 1. Functional Requirements:
 
 The company wants to own its infrastructure to control costs and ensure data privacy.
 
@@ -11,7 +11,7 @@ The company wants to own its infrastructure to control costs and ensure data pri
 *Cloud Consideration*: Future adoption of cloud for deployment and performance scaling.
 
 
-2. Assumptions:
+## 2. Assumptions:
 
 - We are assuming that the Open-source LLMs that we choose will be powerful enough to run on hardware with an investment of 10-15K.
 
@@ -20,7 +20,7 @@ The company wants to own its infrastructure to control costs and ensure data pri
 - We excpect that our infrastructure should handle latency applications without immediate cloud dependency.
 
 
-3. Data Strategy
+## 3. Data Strategy
 
 *Data Collection*: We are considering synthetic data for pretraining.
 
@@ -31,12 +31,12 @@ The company wants to own its infrastructure to control costs and ensure data pri
 *Inference Optimization*: Consider vector databases for efficient model querying.
 
 
-6. Model Selection
+## 4. Model Selection
 
 *Primary Choice*: IBM Granite (Open-source with transparent training data: https://huggingface.co/ibm-granite).
 
 
-7. Deployment & Maintenance Plan
+## 5. Deployment & Maintenance Plan
 
 + Initial Setup:
 
