@@ -1,4 +1,4 @@
-## 1. Functional Requirements:
+## 1. Functional Requirements
 
 The company wants to own its infrastructure to control costs and ensure data privacy.
 
@@ -11,7 +11,7 @@ The company wants to own its infrastructure to control costs and ensure data pri
 *Cloud Consideration*: Future adoption of cloud for deployment and performance scaling.
 
 
-## 2. Assumptions:
+## 2. Assumptions
 
 - We are assuming that the Open-source LLMs that we choose will be powerful enough to run on hardware with an investment of 10-15K.
 
