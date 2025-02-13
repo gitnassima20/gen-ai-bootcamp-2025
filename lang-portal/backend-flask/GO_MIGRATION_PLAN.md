@@ -5,9 +5,11 @@ This document outlines the plan to migrate the Flask backend to Go, suitable for
 ## 1. Project Setup (Week 1)
 
 ### 1.1 Initial Setup
+
 - [x] Create a new directory `backend-go`
 - [x] Initialize Go module: `go mod init lang-portal`
 - [x] Set up the project structure:
+
 ```
 backend-go/
 ├── cmd/
@@ -24,6 +26,7 @@ backend-go/
 ```
 
 ### 1.2 Dependencies
+
 - [x] Install necessary Go packages:
   - [x] github.com/gin-gonic/gin        # Web framework
   - [x] github.com/mattn/go-sqlite3     # SQLite driver
@@ -33,18 +36,20 @@ backend-go/
 ## 2. Database Layer (Week 2)
 
 ### 2.1 Database Connection
+
 - [ ] Create database package in `internal/database`
-  - [ ] Implement connection pool
+  - [x] Implement connection pool
   - [ ] Add error handling
   - [ ] Add context support
-- [ ] Create database models for:
-  - [ ] Words
-  - [ ] Word Reviews
-  - [ ] Word Review Items
-  - [ ] Groups
-  - [ ] Study Activities
+- [x] Create database models for:
+  - [x] Words
+  - [x] Word Reviews
+  - [x] Word Review Items
+  - [x] Groups
+  - [x] Study Activities
 
 ### 2.2 Migrations
+
 - [ ] Port existing SQL schemas:
   - [ ] Words table
   - [ ] Word Reviews table
@@ -57,7 +62,9 @@ backend-go/
 ## 3. API Routes Implementation (Week 3-4)
 
 ### 3.1 Core Functionality
+
 #### Words Routes
+
 - [ ] GET `/words` - List words
   - [ ] Implement handler
   - [ ] Add tests
@@ -82,6 +89,7 @@ backend-go/
   - [ ] Document endpoint
 
 #### Groups Routes
+
 - [ ] GET `/groups` - List groups
   - [ ] Implement handler
   - [ ] Add tests
@@ -106,6 +114,7 @@ backend-go/
   - [ ] Document endpoint
 
 #### Study Sessions Routes
+
 - [ ] GET `/study-sessions` - List sessions
   - [ ] Implement handler
   - [ ] Add tests
@@ -121,6 +130,7 @@ backend-go/
   - [ ] Document endpoint
 
 ### 3.2 Middleware
+
 - [ ] Implement CORS middleware
   - [ ] Add dynamic origin configuration
   - [ ] Test with frontend
@@ -131,6 +141,7 @@ backend-go/
 ## 4. Testing (Week 5)
 
 ### 4.1 Unit Tests
+
 - [ ] Database operations tests
   - [ ] Connection tests
   - [ ] CRUD operation tests
@@ -142,6 +153,7 @@ backend-go/
   - [ ] Error handling tests
 
 ### 4.2 Integration Tests
+
 - [ ] API endpoint integration tests
 - [ ] Database migration tests
 - [ ] Error scenario tests
@@ -150,6 +162,7 @@ backend-go/
 ## 5. Documentation (Throughout)
 
 ### 5.1 Code Documentation
+
 - [ ] Add godoc comments to:
   - [ ] Exported functions
   - [ ] Types and interfaces
@@ -161,6 +174,7 @@ backend-go/
   - [ ] Examples
 
 ### 5.2 Setup Instructions
+
 - [x] Write basic setup instructions
 - [ ] Document environment variables
 - [ ] Add example API requests
@@ -169,6 +183,7 @@ backend-go/
 ## 6. Performance Optimizations
 
 ### 6.1 Optimizations
+
 - [ ] Implement connection pooling
 - [ ] Add caching layer
 - [ ] Optimize database queries
