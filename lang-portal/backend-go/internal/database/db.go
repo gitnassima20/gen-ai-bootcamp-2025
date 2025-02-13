@@ -16,8 +16,8 @@ var (
 	ErrDatabase = errors.New("database error")
 )
 
-// Config holds database configuration
-type Config struct {
+// DatabaseConfig holds database configuration
+type DatabaseConfig struct {
 	Path         string
 	MaxOpenConns int
 	MaxIdleConns int
@@ -29,8 +29,8 @@ type Database struct {
 	*sql.DB
 }
 
-// New creates a new Database instance with the given configuration
-func New(cfg Config) (*Database, error) {
+// CreateDatabase creates a new Database instance with the given configuration
+func CreateDatabase(cfg DatabaseConfig) (*Database, error) {
 	// Validate configuration
 	if cfg.Path == "" {
 		return nil, fmt.Errorf("database path is required")
@@ -47,8 +47,8 @@ func New(cfg Config) (*Database, error) {
 		cfg.MaxIdleTime = 15 * time.Minute // default max idle time
 	}
 
-	// Open database connection
-	db, err := sql.Open("sqlite3", cfg.Path)
+	// Open database connection with foreign key support
+	db, err := sql.Open("sqlite3", cfg.Path+"?_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
@@ -104,7 +104,7 @@ func (db *Database) WithTransaction(ctx context.Context, fn func(*sql.Tx) error)
 func (db *Database) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	result, err := db.DB.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrDatabase, err)
+		return nil, fmt.Errorf("%w: %v (query: %s)", ErrDatabase, err, query)
 	}
 	return result, nil
 }
@@ -113,7 +113,7 @@ func (db *Database) ExecContext(ctx context.Context, query string, args ...inter
 func (db *Database) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrDatabase, err)
+		return nil, fmt.Errorf("%w: %v (query: %s)", ErrDatabase, err, query)
 	}
 	return rows, nil
 }

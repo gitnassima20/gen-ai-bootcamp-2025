@@ -3,17 +3,35 @@ package main
 import (
 	"log"
 
-	"github.com/gin-gonic/gin"
+	"lang-portal/config"
+	"lang-portal/internal/database"
+	"lang-portal/internal/routes"
 )
 
 func main() {
-	r := gin.Default()
-
-	// TODO: Initialize database
-	// TODO: Setup routes
-	// TODO: Setup middleware
-
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
+	// Load configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Configure database
+	dbConfig := database.DatabaseConfig{
+		Path:         cfg.DatabasePath,
+		MaxOpenConns: 25,
+		MaxIdleConns: 25,
+	}
+
+	// Create database connection
+	db, err := database.CreateDatabase(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Setup routes
+	router := routes.SetupRoutes(db.DB)
+
+	// Run server
+	routes.RunServer(router, cfg.ServerPort)
 }
