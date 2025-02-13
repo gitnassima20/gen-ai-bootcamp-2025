@@ -9,7 +9,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	// TODO: Implement configuration loading
 	return &Config{
-		DatabasePath: "words.db",
+		DatabasePath: "langportal.db",
 		ServerPort:   ":8080",
 	}, nil
 }
