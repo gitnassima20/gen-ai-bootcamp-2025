@@ -1,0 +1,47 @@
+[
+    {
+        "kanji": "食べる",
+        "romaji": "taberu",
+        "english": "to eat",
+        "parts": [
+            {"part": "食", "reading": "た", "meaning": "eat"},
+            {"part": "べる", "reading": "beru", "meaning": "to do"}
+        ]
+    },
+    {
+        "kanji": "行く",
+        "romaji": "iku",
+        "english": "to go",
+        "parts": [
+            {"part": "行", "reading": "い", "meaning": "go"},
+            {"part": "く", "reading": "ku", "meaning": "to do"}
+        ]
+    },
+    {
+        "kanji": "見る",
+        "romaji": "miru",
+        "english": "to see",
+        "parts": [
+            {"part": "見", "reading": "み", "meaning": "see"},
+            {"part": "る", "reading": "ru", "meaning": "to do"}
+        ]
+    },
+    {
+        "kanji": "読む",
+        "romaji": "yomu",
+        "english": "to read",
+        "parts": [
+            {"part": "読", "reading": "よ", "meaning": "read"},
+            {"part": "む", "reading": "mu", "meaning": "to do"}
+        ]
+    },
+    {
+        "kanji": "書く",
+        "romaji": "kaku",
+        "english": "to write",
+        "parts": [
+            {"part": "書", "reading": "か", "meaning": "write"},
+            {"part": "く", "reading": "ku", "meaning": "to do"}
+        ]
+    }
+]

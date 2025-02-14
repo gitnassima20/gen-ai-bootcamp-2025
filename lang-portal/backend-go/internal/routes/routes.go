@@ -2,12 +2,13 @@ package routes
 
 import (
 	"database/sql"
-	"github.com/gin-gonic/gin"
 	"lang-portal/internal/handlers"
 	"lang-portal/internal/middleware"
 	"lang-portal/internal/repository"
 	"log"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes configures and returns a Gin router with all API routes
@@ -48,6 +49,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		{
 			groups.GET("", groupHandler.GetGroups)
 			groups.GET("/:id", groupHandler.GetGroup)
+			//TODO: Retest this endpoint
 			groups.GET("/:id/words", groupHandler.GetGroupWords)
 			groups.GET("/:id/words/raw", groupHandler.GetGroupWordsRaw)
 		}

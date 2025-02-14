@@ -39,16 +39,17 @@ func main() {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
-	log.Println("Migrations completed successfully")
+	// Seed database
+	if err := database.SeedDatabase(db.DB); err != nil {
+		log.Fatalf("Seeding failed: %v", err)
+	}
+
+	log.Println("Migrations and seeding completed successfully")
 }
 
 func runMigrations(db *sql.DB) error {
-	// Get the directory of the current executable
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("failed to get executable path: %w", err)
-	}
-	migrationDir := filepath.Join(filepath.Dir(execPath), "..", "..", "migrations")
+	//TODO add absolute path
+	migrationDir := filepath.Join("c:\\Users\\nassima\\Desktop\\gen-ai-bootcamp-2025\\lang-portal\\backend-go", "migrations")
 
 	// Read migration files
 	files, err := os.ReadDir(migrationDir)
@@ -70,7 +71,7 @@ func runMigrations(db *sql.DB) error {
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".sql" {
 			migrationPath := filepath.Join(migrationDir, file.Name())
-			
+
 			// Read migration file
 			migrationSQL, err := os.ReadFile(migrationPath)
 			if err != nil {
