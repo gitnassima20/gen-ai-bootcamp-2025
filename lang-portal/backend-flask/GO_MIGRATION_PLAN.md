@@ -91,25 +91,60 @@ backend-go/
 #### Groups Routes
 
 - [ ] GET `/groups` - List groups
-  - [ ] Implement handler
+  - [x] Implement handler
+  - [ ] Add pagination support
+    - Support `page` query parameter (default: 1)
+    - Support `groups_per_page` (default: 10)
+  - [ ] Add sorting support
+    - Support `sort_by` query parameter
+      - Allowed values: `name`, `words_count`
+      - Default: `name`
+    - Support `order` query parameter
+      - Allowed values: `asc`, `desc`
+      - Default: `asc`
+  - [ ] Return response with:
+    - List of groups
+    - Total pages
+    - Current page
   - [ ] Add tests
   - [ ] Document endpoint
-- [ ] POST `/groups` - Create group
-  - [ ] Implement handler
-  - [ ] Add validation
-  - [ ] Add tests
-  - [ ] Document endpoint
+
 - [ ] GET `/groups/:id` - Get group details
-  - [ ] Implement handler
+  - [x] Implement handler
+  - [ ] Return group details
+    - Include `id`, `group_name`, `word_count`
+  - [ ] Handle not found scenario
   - [ ] Add tests
   - [ ] Document endpoint
-- [ ] PUT `/groups/:id` - Update group
-  - [ ] Implement handler
-  - [ ] Add validation
+
+- [ ] GET `/groups/:id/words` - List words in a group
+  - [x] Implement handler
+  - [ ] Add pagination support
+    - Support `page` query parameter (default: 1)
+    - Support `words_per_page` (default: 10)
+  - [ ] Add sorting support
+    - Support `sort_by` query parameter
+      - Allowed values: `kanji`, `romaji`, `english`, `correct_count`, `wrong_count`
+      - Default: `kanji`
+    - Support `order` query parameter
+      - Allowed values: `asc`, `desc`
+      - Default: `asc`
+  - [ ] Return response with:
+    - List of words
+      - Include `id`, `kanji`, `romaji`, `english`, `correct_count`, `wrong_count`
+    - Total pages
+    - Current page
+  - [ ] Handle group not found scenario
   - [ ] Add tests
   - [ ] Document endpoint
-- [ ] DELETE `/groups/:id` - Delete group
-  - [ ] Implement handler
+
+- [ ] GET `/groups/:id/words/raw` - Get raw words in a group
+  - [x] Implement handler
+  - [ ] Return full word details
+    - Include `group_id`, `group_name`
+    - Include full word details
+      - `id`, `kanji`, `romaji`, `english`, `parts`
+  - [ ] Handle group not found scenario
   - [ ] Add tests
   - [ ] Document endpoint
 

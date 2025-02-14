@@ -2,21 +2,24 @@ package routes
 
 import (
 	"database/sql"
-	"github.com/gin-gonic/gin"
 	"lang-portal/internal/handlers"
 	"lang-portal/internal/middleware"
 	"lang-portal/internal/repository"
 	"log"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes configures and returns a Gin router with all API routes
 func SetupRoutes(db *sql.DB) *gin.Engine {
 	// Create repositories
 	wordRepo := repository.NewWordRepository(db)
+	groupRepo := repository.NewGroupRepository(db)
 
 	// Create handlers
 	wordHandler := handlers.NewWordHandler(wordRepo)
+	groupHandler := handlers.NewGroupHandler(groupRepo)
 
 	// Create router
 	router := gin.Default()
@@ -36,12 +39,22 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 			words.PUT("/:id", wordHandler.UpdateWord)
 			words.DELETE("/:id", wordHandler.DeleteWord)
 
-			// Word group management with different route structure
+			// Word group management
 			words.POST("/groups", wordHandler.AddWordToGroup)
 			words.DELETE("/groups", wordHandler.RemoveWordFromGroup)
 		}
 
-		// TODO: Add routes for other resources (groups, study activities, etc.)
+		// Group routes
+		groups := v1.Group("/groups")
+		{
+			groups.GET("", groupHandler.GetGroups)
+			groups.GET("/:id", groupHandler.GetGroup)
+			//TODO: Retest this endpoint
+			groups.GET("/:id/words", groupHandler.GetGroupWords)
+			groups.GET("/:id/words/raw", groupHandler.GetGroupWordsRaw)
+		}
+
+		// TODO: Add routes for other resources (study activities, etc.)
 	}
 
 	// Health check route
