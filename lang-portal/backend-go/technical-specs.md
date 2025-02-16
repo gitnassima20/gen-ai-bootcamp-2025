@@ -56,19 +56,33 @@ We have the following tables:
 
 ## API Endpoints
 
-- GET `dashboard/last_study_sesssion`
-- GET `dashboard/study_progress`
+- GET `dashboard/last-study-sesssion`
+- GET `dashboard/study-progress`
 - GET `dashboard/quick-stats`
 
 - GET `/study-activities`
 - GET `/study-activities/:id`
 
 - POST `/study-sessions`
-    - params : group_id, study_activity_id
+  - params : group_id, study_activity_id
 
-- GET /words
-- GET /words/:id
-- GET /groups
-- GET /groups/:id
-- GET /groups/:id/words
-- GET /groups/:id/words/raw
+- GET `/words`
+  - pagination with 100 items per page
+- GET `/words/:id`
+
+- GET `/groups`
+  - pagination with 100 items per page
+- GET `/groups/:id`
+- GET `/groups/:id/words` 
+- GET `/groups/:id/study-sessions`
+
+- GET `/study-sessions`
+  - pagination with 100 items per page
+- GET `/study-sessions/:id`
+- GET `/study-sessions/:id/words`
+
+- POST `/reset-history`
+- POST `/full-reset`
+
+- POST `/study-sessions/:id/words/:word-id/review`
+  - params : correct
