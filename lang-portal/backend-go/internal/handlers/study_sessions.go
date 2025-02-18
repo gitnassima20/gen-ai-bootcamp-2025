@@ -119,11 +119,11 @@ func (h *StudySessionHandler) CreateStudySession(c *gin.Context) {
 	c.JSON(http.StatusCreated, session)
 }
 
-// GetStudySession handles GET /api/v1/study-sessions/:id
-func (h *StudySessionHandler) GetStudySession(c *gin.Context) {
+// GetStudySessionDetails handles GET /api/v1/study-sessions/:id
+func (h *StudySessionHandler) GetStudySessionDetails(c *gin.Context) {
 	// Parse session ID from URL
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	sessionIDStr := c.Param("id")
+	sessionID, err := strconv.ParseInt(sessionIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid study session ID",
@@ -132,8 +132,8 @@ func (h *StudySessionHandler) GetStudySession(c *gin.Context) {
 		return
 	}
 
-	// Fetch specific study session
-	session, err := h.studySessionRepo.GetByID(c.Request.Context(), id)
+	// Fetch specific study session details
+	sessionDetails, err := h.studySessionRepo.GetStudySessionDetails(c.Request.Context(), sessionID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Study session not found",
@@ -142,7 +142,7 @@ func (h *StudySessionHandler) GetStudySession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, session)
+	c.JSON(http.StatusOK, sessionDetails)
 }
 
 // CreateWordReview handles POST /study-sessions/:id/words/:word-id/review

@@ -68,7 +68,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		// Study Sessions routes
 		v1.GET("/study-sessions", studySessionHandler.ListStudySessions)
 		v1.POST("/study-sessions", studySessionHandler.CreateStudySession)
-		v1.GET("/study-sessions/:id", studySessionHandler.GetStudySession)
+		v1.GET("/study-sessions/:id", studySessionHandler.GetStudySessionDetails)
 		v1.GET("/study-sessions/:id/words", studySessionHandler.ListStudySessionWords)
 		v1.POST("/study-sessions/:id/words/:word-id/review", studySessionHandler.CreateWordReview)
 

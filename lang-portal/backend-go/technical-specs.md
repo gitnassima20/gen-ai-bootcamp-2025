@@ -338,7 +338,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/study-sessions/:id`
+- [x] GET `api/v1/study-sessions/:id`
   - **Response Body**:
 
   ```json
@@ -352,7 +352,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/study-sessions/:id/words`
+- [x] GET `api/v1/study-sessions/:id/words`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `words_per_page` (optional, default: 100)

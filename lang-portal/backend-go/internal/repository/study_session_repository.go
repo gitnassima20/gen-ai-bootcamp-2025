@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"lang-portal/internal/models"
+	"time"
 )
 
 // StudySessionRepository defines the interface for study session-related database operations
@@ -15,9 +16,6 @@ type StudySessionRepository interface {
 	// Create adds a new study session
 	Create(ctx context.Context, session *models.StudySession) error
 
-	// GetByID retrieves a specific study session
-	GetByID(ctx context.Context, id int64) (*models.StudySession, error)
-
 	// CreateWordReview adds a new word review item to a study session
 	CreateWordReview(ctx context.Context, review *models.WordReviewItem) error
 
@@ -26,6 +24,9 @@ type StudySessionRepository interface {
 
 	// ListWordsByStudySession retrieves words studied in a specific session with performance statistics
 	ListWordsByStudySession(ctx context.Context, sessionID int64, page, wordsPerPage int) ([]WordStats, int, error)
+
+	// GetStudySessionDetails retrieves detailed information about a specific study session
+	GetStudySessionDetails(ctx context.Context, sessionID int64) (*StudySessionDetails, error)
 }
 
 // SQLStudySessionRepository implements StudySessionRepository using SQLite
@@ -125,34 +126,6 @@ func (r *SQLStudySessionRepository) Create(ctx context.Context, session *models.
 	session.ID = id
 
 	return nil
-}
-
-// GetByID retrieves a specific study session
-func (r *SQLStudySessionRepository) GetByID(ctx context.Context, id int64) (*models.StudySession, error) {
-	query := `
-		SELECT 
-			id, 
-			group_id, 
-			study_activity_id, 
-			created_at
-		FROM study_sessions
-		WHERE id = ?
-	`
-	var session models.StudySession
-	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&session.ID,
-		&session.GroupID,
-		&session.StudyActivityID,
-		&session.CreatedAt,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("study session not found")
-		}
-		return nil, fmt.Errorf("failed to get study session: %w", err)
-	}
-
-	return &session, nil
 }
 
 // CreateWordReview adds a new word review item to a study session
@@ -308,4 +281,45 @@ func (r *SQLStudySessionRepository) ListWordsByStudySession(ctx context.Context,
 	}
 
 	return words, totalWords, nil
+}
+
+// StudySessionDetails represents detailed information about a study session
+type StudySessionDetails struct {
+	ID                 int64     `json:"id"`
+	ActivityName       string    `json:"activity_name"`
+	GroupName          string    `json:"group_name"`
+	StartTime          time.Time `json:"start_time"`
+	TotalWordsReviewed int       `json:"total_words_reviewed"`
+}
+
+// GetStudySessionDetails retrieves detailed information about a specific study session
+func (r *SQLStudySessionRepository) GetStudySessionDetails(ctx context.Context, sessionID int64) (*StudySessionDetails, error) {
+	query := `
+		SELECT 
+			ss.id,
+			sa.name as activity_name,
+			g.name as group_name,
+			ss.created_at as start_time,
+			(SELECT COUNT(*) FROM word_review_items wri WHERE wri.study_session_id = ss.id) as total_words_reviewed
+		FROM study_sessions ss
+		JOIN study_activities sa ON ss.study_activity_id = sa.id
+		JOIN groups g ON ss.group_id = g.id
+		WHERE ss.id = ?
+	`
+	var details StudySessionDetails
+	err := r.db.QueryRowContext(ctx, query, sessionID).Scan(
+		&details.ID,
+		&details.ActivityName,
+		&details.GroupName,
+		&details.StartTime,
+		&details.TotalWordsReviewed,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("study session not found")
+		}
+		return nil, fmt.Errorf("failed to get study session details: %w", err)
+	}
+
+	return &details, nil
 }
