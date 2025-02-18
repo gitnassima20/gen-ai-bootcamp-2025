@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"lang-portal/internal/models"
 	"lang-portal/internal/repository"
+
+	"github.com/gin-gonic/gin"
 )
 
 type WordHandler struct {
@@ -40,17 +41,17 @@ func (h *WordHandler) GetWords(c *gin.Context) {
 	words, totalCount, err := h.wordRepo.List(c.Request.Context(), filter, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to retrieve words",
+			"error":   "Failed to retrieve words",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"words":      words,
-		"page":       page,
-		"pageSize":   pageSize,
-		"totalCount": totalCount,
+		"items":        words,
+		"current_page": page,
+		"total_pages":  pageSize,
+		"total_count":  totalCount,
 	})
 }
 
@@ -59,7 +60,7 @@ func (h *WordHandler) CreateWord(c *gin.Context) {
 	var word models.Word
 	if err := c.ShouldBindJSON(&word); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -84,7 +85,7 @@ func (h *WordHandler) CreateWord(c *gin.Context) {
 	// Create word
 	if err := h.wordRepo.Create(c.Request.Context(), &word); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create word",
+			"error":   "Failed to create word",
 			"details": err.Error(),
 		})
 		return
@@ -113,7 +114,7 @@ func (h *WordHandler) GetWord(c *gin.Context) {
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to retrieve word",
+				"error":   "Failed to retrieve word",
 				"details": err.Error(),
 			})
 		}
@@ -138,7 +139,7 @@ func (h *WordHandler) UpdateWord(c *gin.Context) {
 	var word models.Word
 	if err := c.ShouldBindJSON(&word); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -158,7 +159,7 @@ func (h *WordHandler) UpdateWord(c *gin.Context) {
 	// Update word
 	if err := h.wordRepo.Update(c.Request.Context(), &word); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update word",
+			"error":   "Failed to update word",
 			"details": err.Error(),
 		})
 		return
@@ -181,7 +182,7 @@ func (h *WordHandler) DeleteWord(c *gin.Context) {
 	// Delete word
 	if err := h.wordRepo.Delete(c.Request.Context(), wordID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete word",
+			"error":   "Failed to delete word",
 			"details": err.Error(),
 		})
 		return
@@ -199,7 +200,7 @@ func (h *WordHandler) AddWordToGroup(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&groupRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -216,7 +217,7 @@ func (h *WordHandler) AddWordToGroup(c *gin.Context) {
 	// Add word to group
 	if err := h.wordRepo.AddToGroup(c.Request.Context(), groupRequest.WordID, groupRequest.GroupID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to add word to group",
+			"error":   "Failed to add word to group",
 			"details": err.Error(),
 		})
 		return
@@ -236,7 +237,7 @@ func (h *WordHandler) RemoveWordFromGroup(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&groupRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": err.Error(),
 		})
 		return
@@ -253,7 +254,7 @@ func (h *WordHandler) RemoveWordFromGroup(c *gin.Context) {
 	// Remove word from group
 	if err := h.wordRepo.RemoveFromGroup(c.Request.Context(), groupRequest.WordID, groupRequest.GroupID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to remove word from group",
+			"error":   "Failed to remove word from group",
 			"details": err.Error(),
 		})
 		return

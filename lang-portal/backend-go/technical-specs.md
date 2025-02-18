@@ -58,7 +58,7 @@ We have the following tables:
 
 ### Dashboard
 
-- GET `dashboard/last-study-sesssion`
+- GET `api/v1/dashboard/last-study-sesssion`
   - **Response Body**:
 
   ```json
@@ -71,7 +71,7 @@ We have the following tables:
   }
   ```
 
-- GET `dashboard/study-progress`
+- GET `api/v1/dashboard/study-progress`
   - **Response Body**:
 
   ```json
@@ -81,7 +81,7 @@ We have the following tables:
   }
   ```
 
-- GET `dashboard/quick-stats`
+- GET `api/v1/dashboard/quick-stats`
   - **Response Body**:
 
   ```json
@@ -95,7 +95,7 @@ We have the following tables:
 
 ### Study Activities
 
-- GET `/study-activities`
+- GET `api/v1/study-activities`
   - **Response Body**:
 
   ```json
@@ -105,7 +105,6 @@ We have the following tables:
         "id": 1,
         "name": "Japanese Verbs Practice",
         "thumbnail_url": "https://example.com/verbs-thumbnail.jpg",
-        "description": "Practice Japanese verb conjugations",
         "total_sessions": 15,
         "last_used": "2025-02-16T14:30:00Z"
       },
@@ -113,7 +112,6 @@ We have the following tables:
         "id": 2,
         "name": "Adjectives Mastery",
         "thumbnail_url": "https://example.com/adjectives-thumbnail.jpg",
-        "description": "Learn and master Japanese adjectives",
         "total_sessions": 10,
         "last_used": "2025-02-15T09:45:00Z"
       }
@@ -122,19 +120,18 @@ We have the following tables:
   }
   ```
 
-- GET `/study-activities/:id`
+- GET `api/v1/study-activities/:id`
   - **Response Body**:
 
   ```json
   {
     "id": 1,
     "name": "Japanese Verbs Practice",
-    "thumbnail_url": "https://example.com/thumbnail.jpg",
-    "description": "Practicing Japanese verbs"
+    "thumbnail_url": "https://example.com/thumbnail.jpg"
   }
   ```
 
-- POST `/study-sessions`
+- POST `api/v1/study-sessions`
   - **Request Params**:
     - group_id int
     - study_activity_id int
@@ -150,7 +147,7 @@ We have the following tables:
 
 ### Words
 
-- GET `/words`
+- GET `api/v1/words`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `words_per_page` (optional, default: 100)
@@ -176,13 +173,13 @@ We have the following tables:
         "wrong_count": 3
       }
     ],
-    "total_words": 250,
+    "total_count": 250,
     "current_page": 1,
     "total_pages": 3
   }
   ```
 
-- GET `/words/:id`
+- GET `api/v1/words/:id`
   - **Response Body**:
 
   ```json
@@ -208,7 +205,7 @@ We have the following tables:
 
 ### Groups of Words
 
-- GET `/groups`
+- GET `api/v1/groups`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `groups_per_page` (optional, default: 100)
@@ -228,13 +225,13 @@ We have the following tables:
         "word_count": 40
       }
     ],
-    "total_groups": 10,
+    "total_count": 10,
     "current_page": 1,
     "total_pages": 1
   }
   ```
 
-- GET `/groups/:id`
+- GET `api/v1/groups/:id`
   - **Response Body**:
 
   ```json
@@ -245,7 +242,7 @@ We have the following tables:
   }
   ```
 
-- GET `/groups/:id/words`
+- GET `api/v1/groups/:id/words`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `words_per_page` (optional, default: 100)
@@ -277,7 +274,7 @@ We have the following tables:
   }
   ```
 
-- GET `/groups/:id/study-sessions`
+- GET `api/v1/groups/:id/study-sessions`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `sessions_per_page` (optional, default: 100)
@@ -301,7 +298,7 @@ We have the following tables:
         "total_words_reviewed": 25,
       }
     ],
-    "total_sessions": 15,
+    "total_count": 15,
     "current_page": 1,
     "total_pages": 1
   }
@@ -309,7 +306,7 @@ We have the following tables:
 
 ### Study Sessions
 
-- GET `/study-sessions`
+- GET `api/v1/study-sessions`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `sessions_per_page` (optional, default: 100)
@@ -341,7 +338,7 @@ We have the following tables:
   }
   ```
 
-- GET `/study-sessions/:id`
+- GET `api/v1/study-sessions/:id`
   - **Response Body**:
 
   ```json
@@ -355,7 +352,7 @@ We have the following tables:
   }
   ```
 
-- GET `/study-sessions/:id/words`
+- GET `api/v1/study-sessions/:id/words`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `words_per_page` (optional, default: 100)
@@ -437,7 +434,7 @@ We have the following tables:
 Mage is a task runner for Go.
 Lets list out possible tasks we need for our lang portal.
 
-- **Task 1**: Initialize the sqlite3 database called `langporal.db`
+- **Task 1**: Initialize the sqlite3 database called `langportal.db`
 - **Task 2**: Run migrations found in `migrations/`
 - **Task 3**: Run seed data found in `seed/`
 - **Task 4**: Start the server: `go run cmd/server/main.go`

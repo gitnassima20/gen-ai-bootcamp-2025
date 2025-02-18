@@ -77,8 +77,9 @@ func (r *SQLWordRepository) GetByID(ctx context.Context, id int64) (*models.Word
 		WHERE id = ?
 	`
 	var word models.Word
+	var partsData interface{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&word.ID, &word.Kanji, &word.Romaji, &word.English, &word.Parts,
+		&word.ID, &word.Kanji, &word.Romaji, &word.English, &partsData,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -86,6 +87,12 @@ func (r *SQLWordRepository) GetByID(ctx context.Context, id int64) (*models.Word
 		}
 		return nil, fmt.Errorf("failed to get word: %w", err)
 	}
+
+	// Use the new UnmarshalParts method
+	if err := word.UnmarshalParts(partsData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal parts: %w", err)
+	}
+
 	return &word, nil
 }
 
@@ -170,9 +177,22 @@ func (r *SQLWordRepository) List(ctx context.Context, filter WordFilter, page, p
 	var words []models.Word
 	for rows.Next() {
 		var word models.Word
-		if err := rows.Scan(&word.ID, &word.Kanji, &word.Romaji, &word.English, &word.Parts); err != nil {
+		var partsData interface{}
+		if err := rows.Scan(
+			&word.ID,
+			&word.Kanji,
+			&word.Romaji,
+			&word.English,
+			&partsData,
+		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan word: %w", err)
 		}
+
+		// Use the new UnmarshalParts method
+		if err := word.UnmarshalParts(partsData); err != nil {
+			return nil, 0, fmt.Errorf("failed to unmarshal parts: %w", err)
+		}
+
 		words = append(words, word)
 	}
 
