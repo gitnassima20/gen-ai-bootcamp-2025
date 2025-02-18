@@ -72,3 +72,6 @@ curl --noproxy "*" http://localhost:8008/api/generate -d '{
 - Q4: Will the mdoel be downloaded in the container ?
 does that mean that the ml model will be deleted when the container is stopped ?
 - A4: The model will be downloaded in the container. And vanish when the container is stopped. You need to mount a local drive to store the model, maybe more work needed to be done for this part.
+
+- Q5: For LLM service which can do tex-generation it suggests it will only work TGI/vLLM and all you have to do is to have it running. Does TGI and vLLM have a standarized API or is there code to detect which one is running ? Do we have to use Xeon or Guadi processors ?
+- A5: Yes, TGI and vLLM are similar to Ollama in that they are all LLM inference frameworks,all of them offer APIs with OpenAI compatibility, so in theory they should work the same.
