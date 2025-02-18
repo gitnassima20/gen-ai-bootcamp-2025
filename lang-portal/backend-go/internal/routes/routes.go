@@ -1,54 +1,26 @@
 package routes
 
 import (
-	"database/sql"
-	"lang-portal/internal/handlers"
-	"lang-portal/internal/middleware"
-	"lang-portal/internal/repository"
-	"log"
-	"strings"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
+
+	"lang-portal/internal/handlers"
 )
 
-// SetupRoutes configures and returns a Gin router with all API routes
-func SetupRoutes(db *sql.DB) *gin.Engine {
-	// Create repositories
-	wordRepo := repository.NewWordRepository(db)
-	groupRepo := repository.NewGroupRepository(db)
-	studyActivityRepo := repository.NewStudyActivityRepository(db)
-	studySessionRepo := repository.NewStudySessionRepository(db)
-
-	// Create handlers
-	wordHandler := handlers.NewWordHandler(wordRepo)
-	groupHandler := handlers.NewGroupHandler(groupRepo)
-	studyActivityHandler := handlers.NewStudyActivityHandler(studyActivityRepo)
-	studySessionHandler := handlers.NewStudySessionHandler(studySessionRepo)
-
-	// Create router
+// SetupRoutes configures and returns the main router with all API routes
+func SetupRoutes(
+	groupHandler *handlers.GroupHandler,
+	studyActivityHandler *handlers.StudyActivityHandler,
+	studySessionHandler *handlers.StudySessionHandler,
+	dashboardHandler *handlers.DashboardHandler,
+) *gin.Engine {
 	router := gin.Default()
 
-	// Apply CORS middleware
-	router.Use(middleware.CORSMiddleware())
-
-	// API group
+	// API versioning
 	v1 := router.Group("/api/v1")
 	{
-		// Word routes
-		words := v1.Group("/words")
-		{
-			words.GET("", wordHandler.GetWords)
-			words.POST("", wordHandler.CreateWord)
-			words.GET("/:id", wordHandler.GetWord)
-			words.PUT("/:id", wordHandler.UpdateWord)
-			words.DELETE("/:id", wordHandler.DeleteWord)
-
-			// Word group management
-			words.POST("/groups", wordHandler.AddWordToGroup)
-			words.DELETE("/groups", wordHandler.RemoveWordFromGroup)
-		}
-
-		// Group routes
+		// Groups routes
 		groups := v1.Group("/groups")
 		{
 			groups.GET("", groupHandler.GetGroups)
@@ -75,7 +47,13 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 			studySessions.POST("/:id/words/:word-id/review", studySessionHandler.CreateWordReview)
 		}
 
-		// TODO: Add routes for other resources
+		// Dashboard routes
+		dashboard := v1.Group("/dashboard")
+		{
+			dashboard.GET("/last-study-session", dashboardHandler.GetLastStudySession)
+			dashboard.GET("/study-progress", dashboardHandler.GetStudyProgress)
+			dashboard.GET("/quick-stats", dashboardHandler.GetQuickStats)
+		}
 	}
 
 	// Health check route
@@ -89,17 +67,15 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 }
 
 // RunServer starts the HTTP server
-func RunServer(router *gin.Engine, port string) {
+func RunServer(router *gin.Engine, port string) error {
 	// Remove leading ':' if present and use localhost
-	if strings.HasPrefix(port, ":") {
+	if len(port) > 0 && port[0] == ':' {
 		port = port[1:]
 	}
 
 	// Set up the address to listen on
 	address := "localhost:" + port
 
-	log.Printf("Starting server on %s", address)
-	if err := router.Run(address); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	fmt.Printf("Starting server on %s\n", address)
+	return router.Run(address)
 }

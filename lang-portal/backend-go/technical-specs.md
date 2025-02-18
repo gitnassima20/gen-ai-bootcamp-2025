@@ -58,7 +58,7 @@ We have the following tables:
 
 ### Dashboard
 
-- GET `api/v1/dashboard/last-study-sesssion`
+- [x] GET `api/v1/dashboard/last-study-sesssion`
   - **Response Body**:
 
   ```json
@@ -71,7 +71,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/dashboard/study-progress`
+- [x] GET `api/v1/dashboard/study-progress`
   - **Response Body**:
 
   ```json
@@ -81,7 +81,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/dashboard/quick-stats`
+- [x] GET `api/v1/dashboard/quick-stats`
   - **Response Body**:
 
   ```json
@@ -95,7 +95,7 @@ We have the following tables:
 
 ### Study Activities
 
-- GET `api/v1/study-activities`
+- [x] GET `api/v1/study-activities`
   - **Response Body**:
 
   ```json
@@ -120,7 +120,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/study-activities/:id`
+- [x] GET `api/v1/study-activities/:id`
   - **Response Body**:
 
   ```json
@@ -131,7 +131,7 @@ We have the following tables:
   }
   ```
 
-- POST `api/v1/study-sessions`
+- [x] POST `api/v1/study-sessions`
   - **Request Params**:
     - group_id int
     - study_activity_id int
