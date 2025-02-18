@@ -16,10 +16,12 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 	// Create repositories
 	wordRepo := repository.NewWordRepository(db)
 	groupRepo := repository.NewGroupRepository(db)
+	studyActivityRepo := repository.NewStudyActivityRepository(db)
 
 	// Create handlers
 	wordHandler := handlers.NewWordHandler(wordRepo)
 	groupHandler := handlers.NewGroupHandler(groupRepo)
+	studyActivityHandler := handlers.NewStudyActivityHandler(studyActivityRepo)
 
 	// Create router
 	router := gin.Default()
@@ -54,7 +56,14 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 			groups.GET("/:id/words/raw", groupHandler.GetGroupWordsRaw)
 		}
 
-		// TODO: Add routes for other resources (study activities, etc.)
+		// Study Activities routes
+		studyActivities := v1.Group("/study-activities")
+		{
+			studyActivities.GET("", studyActivityHandler.ListStudyActivities)
+			studyActivities.GET("/:id", studyActivityHandler.GetStudyActivity)
+		}
+
+		// TODO: Add routes for other resources 
 	}
 
 	// Health check route

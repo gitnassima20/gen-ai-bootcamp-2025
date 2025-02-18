@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -14,11 +15,30 @@ type Word struct {
 	Parts   json.RawMessage `json:"parts"`
 }
 
+// UnmarshalParts attempts to parse the parts column safely
+func (w *Word) UnmarshalParts(data interface{}) error {
+	switch v := data.(type) {
+	case string:
+		// If it's a string, try to convert to RawMessage
+		return json.Unmarshal([]byte(v), &w.Parts)
+	case []byte:
+		// If it's already bytes, use directly
+		w.Parts = json.RawMessage(v)
+		return nil
+	case nil:
+		// If nil, set to empty JSON object
+		w.Parts = json.RawMessage("{}")
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for parts: %T", data)
+	}
+}
+
 // StudyActivity represents different types of study activities
 type StudyActivity struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	ID     int64  `json:"id"`
+	Name   string `json:"name"`
+	URL    string `json:"thumbnail_url"`
 }
 
 // StudySession represents an individual study session
