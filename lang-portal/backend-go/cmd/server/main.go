@@ -5,6 +5,8 @@ import (
 
 	"lang-portal/config"
 	"lang-portal/internal/database"
+	"lang-portal/internal/handlers"
+	"lang-portal/internal/repository"
 	"lang-portal/internal/routes"
 )
 
@@ -29,9 +31,28 @@ func main() {
 	}
 	defer db.Close()
 
+	// Create repositories
+	groupRepo := repository.NewGroupRepository(db.DB)
+	studyActivityRepo := repository.NewStudyActivityRepository(db.DB)
+	studySessionRepo := repository.NewStudySessionRepository(db.DB)
+	dashboardRepo := repository.NewDashboardRepository(db.DB)
+
+	// Create handlers
+	groupHandler := handlers.NewGroupHandler(groupRepo)
+	studyActivityHandler := handlers.NewStudyActivityHandler(studyActivityRepo)
+	studySessionHandler := handlers.NewStudySessionHandler(studySessionRepo)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardRepo)
+
 	// Setup routes
-	router := routes.SetupRoutes(db.DB)
+	router := routes.SetupRoutes(
+		groupHandler,
+		studyActivityHandler,
+		studySessionHandler,
+		dashboardHandler,
+	)
 
 	// Run server
-	routes.RunServer(router, cfg.ServerPort)
+	if err := routes.RunServer(router, cfg.ServerPort); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
