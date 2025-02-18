@@ -55,6 +55,7 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 			groups.GET("/:id", groupHandler.GetGroup)
 			groups.GET("/:id/words", groupHandler.GetGroupWords)
 			groups.GET("/:id/words/raw", groupHandler.GetGroupWordsRaw)
+			groups.GET("/:id/study-sessions", groupHandler.GetGroupStudySessions)
 		}
 
 		// Study Activities routes

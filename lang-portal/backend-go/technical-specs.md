@@ -205,7 +205,7 @@ We have the following tables:
 
 ### Groups of Words
 
-- GET `api/v1/groups`
+- [x] GET `api/v1/groups`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `groups_per_page` (optional, default: 100)
@@ -231,7 +231,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/groups/:id`
+- [x] GET `api/v1/groups/:id`
   - **Response Body**:
 
   ```json
@@ -242,7 +242,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/groups/:id/words`
+- [x] GET `api/v1/groups/:id/words`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `words_per_page` (optional, default: 100)
@@ -274,7 +274,7 @@ We have the following tables:
   }
   ```
 
-- GET `api/v1/groups/:id/study-sessions`
+- [x] GET `api/v1/groups/:id/study-sessions`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `sessions_per_page` (optional, default: 100)
