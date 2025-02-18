@@ -53,7 +53,6 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		{
 			groups.GET("", groupHandler.GetGroups)
 			groups.GET("/:id", groupHandler.GetGroup)
-			//TODO: Retest this endpoint
 			groups.GET("/:id/words", groupHandler.GetGroupWords)
 			groups.GET("/:id/words/raw", groupHandler.GetGroupWordsRaw)
 		}
@@ -66,11 +65,14 @@ func SetupRoutes(db *sql.DB) *gin.Engine {
 		}
 
 		// Study Sessions routes
-		v1.GET("/study-sessions", studySessionHandler.ListStudySessions)
-		v1.POST("/study-sessions", studySessionHandler.CreateStudySession)
-		v1.GET("/study-sessions/:id", studySessionHandler.GetStudySessionDetails)
-		v1.GET("/study-sessions/:id/words", studySessionHandler.ListStudySessionWords)
-		v1.POST("/study-sessions/:id/words/:word-id/review", studySessionHandler.CreateWordReview)
+		studySessions := v1.Group("/study-sessions")
+		{
+			studySessions.GET("", studySessionHandler.ListStudySessions)
+			studySessions.POST("", studySessionHandler.CreateStudySession)
+			studySessions.GET("/:id", studySessionHandler.GetStudySessionDetails)
+			studySessions.GET("/:id/words", studySessionHandler.ListStudySessionWords)
+			studySessions.POST("/:id/words/:word-id/review", studySessionHandler.CreateWordReview)
+		}
 
 		// TODO: Add routes for other resources
 	}

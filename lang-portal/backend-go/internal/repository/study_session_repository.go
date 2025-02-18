@@ -5,13 +5,24 @@ import (
 	"database/sql"
 	"fmt"
 	"lang-portal/internal/models"
+	"strings"
 	"time"
 )
+
+// StudySessionListItem represents a study session in the list view
+type StudySessionListItem struct {
+	ID                int64     `json:"id"`
+	ActivityName      string    `json:"activity_name"`
+	GroupName         string    `json:"group_name"`
+	StartTime         time.Time `json:"start_time"`
+	EndTime           time.Time `json:"end_time"`
+	TotalWordsReviewed int      `json:"total_words_reviewed"`
+}
 
 // StudySessionRepository defines the interface for study session-related database operations
 type StudySessionRepository interface {
 	// List retrieves study sessions with optional filtering and pagination
-	List(ctx context.Context, studyActivityID, groupID int64, page, pageSize int) ([]models.StudySession, int, error)
+	List(ctx context.Context, studyActivityID, groupID int64, page, pageSize int) ([]StudySessionListItem, int, error)
 
 	// Create adds a new study session
 	Create(ctx context.Context, session *models.StudySession) error
@@ -40,25 +51,31 @@ func NewStudySessionRepository(db *sql.DB) *SQLStudySessionRepository {
 }
 
 // List retrieves study sessions with optional filtering and pagination
-func (r *SQLStudySessionRepository) List(ctx context.Context, studyActivityID, groupID int64, page, pageSize int) ([]models.StudySession, int, error) {
-	// Construct base query with optional filters
-	baseQuery := `FROM study_sessions ss WHERE 1=1`
+func (r *SQLStudySessionRepository) List(ctx context.Context, studyActivityID, groupID int64, page, pageSize int) ([]StudySessionListItem, int, error) {
+	// Prepare filter conditions
+	conditions := []string{}
 	args := []interface{}{}
 
 	if studyActivityID > 0 {
-		baseQuery += ` AND ss.study_activity_id = ?`
+		conditions = append(conditions, "ss.study_activity_id = ?")
 		args = append(args, studyActivityID)
 	}
 
 	if groupID > 0 {
-		baseQuery += ` AND ss.group_id = ?`
+		conditions = append(conditions, "ss.group_id = ?")
 		args = append(args, groupID)
 	}
 
+	// Construct where clause
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
 	// Count total sessions
-	countQuery := `SELECT COUNT(*) ` + baseQuery
-	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM study_sessions ss %s", whereClause)
+	var totalSessions int
+	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalSessions)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count study sessions: %w", err)
 	}
@@ -66,17 +83,24 @@ func (r *SQLStudySessionRepository) List(ctx context.Context, studyActivityID, g
 	// Calculate pagination
 	offset := (page - 1) * pageSize
 
-	// Fetch sessions
-	query := `
+	// Query to fetch detailed session information
+	query := fmt.Sprintf(`
 		SELECT 
-			ss.id, 
-			ss.group_id, 
-			ss.study_activity_id, 
-			ss.created_at
-		` + baseQuery + `
+			ss.id,
+			sa.name as activity_name,
+			g.name as group_name,
+			ss.created_at as start_time,
+			ss.created_at as end_time,
+			(SELECT COUNT(*) FROM word_review_items wri WHERE wri.study_session_id = ss.id) as total_words_reviewed
+		FROM study_sessions ss
+		JOIN study_activities sa ON ss.study_activity_id = sa.id
+		JOIN groups g ON ss.group_id = g.id
+		%s
 		ORDER BY ss.created_at DESC
 		LIMIT ? OFFSET ?
-	`
+	`, whereClause)
+	
+	// Add pagination args
 	args = append(args, pageSize, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -85,21 +109,23 @@ func (r *SQLStudySessionRepository) List(ctx context.Context, studyActivityID, g
 	}
 	defer rows.Close()
 
-	var sessions []models.StudySession
+	var sessions []StudySessionListItem
 	for rows.Next() {
-		var session models.StudySession
+		var session StudySessionListItem
 		if err := rows.Scan(
 			&session.ID,
-			&session.GroupID,
-			&session.StudyActivityID,
-			&session.CreatedAt,
+			&session.ActivityName,
+			&session.GroupName,
+			&session.StartTime,
+			&session.EndTime,
+			&session.TotalWordsReviewed,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan study session: %w", err)
 		}
 		sessions = append(sessions, session)
 	}
 
-	return sessions, totalCount, nil
+	return sessions, totalSessions, nil
 }
 
 // Create adds a new study session

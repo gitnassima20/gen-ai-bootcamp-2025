@@ -24,9 +24,9 @@ func NewStudySessionHandler(repo repository.StudySessionRepository) *StudySessio
 
 // ListStudySessions handles GET /api/v1/study-sessions
 func (h *StudySessionHandler) ListStudySessions(c *gin.Context) {
-	// Parse query parameters
+	// Parse pagination parameters
 	pageStr := c.DefaultQuery("page", "1")
-	pageSizeStr := c.DefaultQuery("sessions_per_page", "100")
+	sessionsPerPageStr := c.DefaultQuery("sessions_per_page", "100")
 	activityIDStr := c.Query("activity_id")
 	groupIDStr := c.Query("group_id")
 
@@ -35,9 +35,9 @@ func (h *StudySessionHandler) ListStudySessions(c *gin.Context) {
 		page = 1
 	}
 
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 1 {
-		pageSize = 100
+	sessionsPerPage, err := strconv.Atoi(sessionsPerPageStr)
+	if err != nil || sessionsPerPage < 1 {
+		sessionsPerPage = 100
 	}
 
 	// Parse optional activity and group IDs
@@ -65,7 +65,7 @@ func (h *StudySessionHandler) ListStudySessions(c *gin.Context) {
 	}
 
 	// Fetch study sessions
-	sessions, totalCount, err := h.studySessionRepo.List(c.Request.Context(), activityID, groupID, page, pageSize)
+	sessions, totalSessions, err := h.studySessionRepo.List(c.Request.Context(), activityID, groupID, page, sessionsPerPage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to retrieve study sessions",
@@ -74,11 +74,15 @@ func (h *StudySessionHandler) ListStudySessions(c *gin.Context) {
 		return
 	}
 
+	// Calculate total pages
+	totalPages := (totalSessions + sessionsPerPage - 1) / sessionsPerPage
+
+	// Prepare response
 	c.JSON(http.StatusOK, gin.H{
-		"items":        sessions,
-		"current_page": page,
-		"total_pages":  (totalCount + pageSize - 1) / pageSize,
-		"total_count":  totalCount,
+		"items":          sessions,
+		"total_sessions": totalSessions,
+		"current_page":   page,
+		"total_pages":    totalPages,
 	})
 }
 
