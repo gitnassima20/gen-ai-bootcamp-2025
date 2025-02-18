@@ -406,7 +406,7 @@ We have the following tables:
   }
   ```
 
-- POST `/study-sessions/:id/words/:word-id/review`
+- [x] POST `/study-sessions/:id/words/:word-id/review`
   - **Request Params/Body**:
     - id (study-session-id) int
     - word-id int

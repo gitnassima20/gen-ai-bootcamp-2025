@@ -210,3 +210,52 @@ func (h *StudySessionHandler) CreateWordReview(c *gin.Context) {
 		"created_at":       review.CreatedAt.Format(time.RFC3339),
 	})
 }
+
+// ListStudySessionWords handles GET /api/v1/study-sessions/:id/words
+func (h *StudySessionHandler) ListStudySessionWords(c *gin.Context) {
+	// Parse study session ID from URL
+	sessionIDStr := c.Param("id")
+	sessionID, err := strconv.ParseInt(sessionIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid study session ID",
+			"details": "Session ID must be a valid integer",
+		})
+		return
+	}
+
+	// Parse pagination parameters
+	pageStr := c.DefaultQuery("page", "1")
+	wordsPerPageStr := c.DefaultQuery("words_per_page", "100")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	wordsPerPage, err := strconv.Atoi(wordsPerPageStr)
+	if err != nil || wordsPerPage < 1 {
+		wordsPerPage = 100
+	}
+
+	// Fetch words for the study session
+	words, totalWords, err := h.studySessionRepo.ListWordsByStudySession(c.Request.Context(), sessionID, page, wordsPerPage)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to retrieve study session words",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Calculate total pages
+	totalPages := (totalWords + wordsPerPage - 1) / wordsPerPage
+
+	// Prepare response
+	c.JSON(http.StatusOK, gin.H{
+		"items":        words,
+		"total_words":  totalWords,
+		"current_page": page,
+		"total_pages":  totalPages,
+	})
+}

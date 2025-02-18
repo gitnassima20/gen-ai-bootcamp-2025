@@ -23,6 +23,9 @@ type StudySessionRepository interface {
 
 	// GetWordReviewsBySessionID retrieves all word reviews for a specific study session
 	GetWordReviewsBySessionID(ctx context.Context, studySessionID int64) ([]models.WordReviewItem, error)
+
+	// ListWordsByStudySession retrieves words studied in a specific session with performance statistics
+	ListWordsByStudySession(ctx context.Context, sessionID int64, page, wordsPerPage int) ([]WordStats, int, error)
 }
 
 // SQLStudySessionRepository implements StudySessionRepository using SQLite
@@ -236,4 +239,73 @@ func (r *SQLStudySessionRepository) GetWordReviewsBySessionID(ctx context.Contex
 	}
 
 	return reviews, nil
+}
+
+// WordStats represents word performance statistics
+type WordStats struct {
+	ID           int64  `json:"id"`
+	Kanji        string `json:"kanji"`
+	Romaji       string `json:"romaji"`
+	English      string `json:"english"`
+	CorrectCount int    `json:"correct_count"`
+	WrongCount   int    `json:"wrong_count"`
+}
+
+// ListWordsByStudySession retrieves words studied in a specific session with performance statistics
+func (r *SQLStudySessionRepository) ListWordsByStudySession(ctx context.Context, sessionID int64, page, wordsPerPage int) ([]WordStats, int, error) {
+	// Base query to count total words in the session
+	countQuery := `
+		SELECT COUNT(DISTINCT w.id)
+		FROM words w
+		JOIN word_review_items wri ON w.id = wri.word_id
+		WHERE wri.study_session_id = ?
+	`
+	var totalWords int
+	err := r.db.QueryRowContext(ctx, countQuery, sessionID).Scan(&totalWords)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count words: %w", err)
+	}
+
+	// Calculate pagination
+	offset := (page - 1) * wordsPerPage
+
+	// Query to fetch words with their review statistics
+	query := `
+		SELECT 
+			w.id, 
+			w.kanji, 
+			w.romaji, 
+			w.english,
+			SUM(CASE WHEN wri.correct = 1 THEN 1 ELSE 0 END) as correct_count,
+			SUM(CASE WHEN wri.correct = 0 THEN 1 ELSE 0 END) as wrong_count
+		FROM words w
+		JOIN word_review_items wri ON w.id = wri.word_id
+		WHERE wri.study_session_id = ?
+		GROUP BY w.id, w.kanji, w.romaji, w.english
+		ORDER BY w.id
+		LIMIT ? OFFSET ?
+	`
+	rows, err := r.db.QueryContext(ctx, query, sessionID, wordsPerPage, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to fetch words: %w", err)
+	}
+	defer rows.Close()
+
+	var words []WordStats
+	for rows.Next() {
+		var word WordStats
+		if err := rows.Scan(
+			&word.ID,
+			&word.Kanji,
+			&word.Romaji,
+			&word.English,
+			&word.CorrectCount,
+			&word.WrongCount,
+		); err != nil {
+			return nil, 0, fmt.Errorf("failed to scan word: %w", err)
+		}
+		words = append(words, word)
+	}
+
+	return words, totalWords, nil
 }
