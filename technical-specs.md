@@ -1,5 +1,70 @@
 # Frontend Technical Specs
 
+We would like to build a Japanese language learning app.
+
+## Role/Profession:
+
+Front-End Developer
+
+## Project Description
+
+### Project Brief
+
+We are building a japanese language learning web-app which serves the following purposes:
+
+- A portal to launch study activities
+- to store, group and explore japanese vocabulary
+- to review study progress
+
+The web-app is intended for desktop only, so we don't have to concerned with mobile layouts.
+
+### Technical Requirements
+
+- Qwick as the frontend library
+- Tailwind CSS as the CSS framework
+- Vite.js as the local development server
+- Typescript for the programming language
+- ShadCN for components
+
+### Front-End Routes
+
+This is a list of routes for our web-app we are building
+Each of these routes are a page and we'll describe them
+in more details under the pages heading.
+
+- /dashboard
+- /study-activities
+- /study-activities/:id
+- /words
+- /words/:id
+- /groups
+- /groups/:id
+- /sessions
+- /settings
+
+The default route / should forward to /dashboard
+
+### Global Components
+
+There will be a horizental navigation bar with the following links:
+
+- Dashboard
+- Study Activities
+- Words
+- Word Groups
+- Study Sessions
+- Settings
+
+### Breadcrumbs
+
+Beneath the navigation there will be breadcrumbs so users can easily see where they are Examples of breadcrumbs
+
+Dashboard
+Study Activities > Adventure MUD
+Study Activities > Typing Tutor
+Words > こんにちは
+Word Groups > Core Verbs
+
 ## Pages
 
 ### Dashboard /
