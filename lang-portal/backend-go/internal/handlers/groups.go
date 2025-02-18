@@ -5,51 +5,37 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-
-	"lang-portal/internal/models"
 	"lang-portal/internal/repository"
 )
 
-// GroupHandler manages HTTP handlers for group-related operations
+// GroupHandler handles HTTP requests related to groups
 type GroupHandler struct {
 	groupRepo repository.GroupRepository
 }
 
-// NewGroupHandler creates a new instance of GroupHandler
-func NewGroupHandler(groupRepo repository.GroupRepository) *GroupHandler {
-	return &GroupHandler{
-		groupRepo: groupRepo,
-	}
+// NewGroupHandler creates a new handler for groups
+func NewGroupHandler(repo repository.GroupRepository) *GroupHandler {
+	return &GroupHandler{groupRepo: repo}
 }
 
-// GetGroups handles retrieving a list of groups
+// GetGroups handles GET /api/v1/groups
 func (h *GroupHandler) GetGroups(c *gin.Context) {
-	// Parse query parameters with defaults
-	params := models.DefaultGroupQueryParams()
+	// Parse pagination parameters
+	pageStr := c.DefaultQuery("page", "1")
+	groupsPerPageStr := c.DefaultQuery("groups_per_page", "100")
 
-	// Override with request parameters if provided
-	if page, exists := c.GetQuery("page"); exists {
-		if pageNum, err := strconv.Atoi(page); err == nil && pageNum > 0 {
-			params.Page = pageNum
-		}
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
 	}
 
-	if perPage, exists := c.GetQuery("groups_per_page"); exists {
-		if num, err := strconv.Atoi(perPage); err == nil && num > 0 {
-			params.PerPage = num
-		}
+	groupsPerPage, err := strconv.Atoi(groupsPerPageStr)
+	if err != nil || groupsPerPage < 1 {
+		groupsPerPage = 100
 	}
 
-	if sortBy, exists := c.GetQuery("sort_by"); exists {
-		params.SortBy = sortBy
-	}
-
-	if order, exists := c.GetQuery("order"); exists {
-		params.Order = order
-	}
-
-	// Retrieve groups
-	groupsResponse, err := h.groupRepo.GetGroups(c.Request.Context(), params)
+	// Fetch groups
+	groups, totalGroups, err := h.groupRepo.List(c.Request.Context(), page, groupsPerPage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to retrieve groups",
@@ -58,22 +44,33 @@ func (h *GroupHandler) GetGroups(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, groupsResponse)
+	// Calculate total pages
+	totalPages := (totalGroups + groupsPerPage - 1) / groupsPerPage
+
+	// Prepare response
+	c.JSON(http.StatusOK, gin.H{
+		"items":        groups,
+		"total_count":  totalGroups,
+		"current_page": page,
+		"total_pages":  totalPages,
+	})
 }
 
-// GetGroup handles retrieving a specific group by ID
+// GetGroup handles GET /api/v1/groups/:id
 func (h *GroupHandler) GetGroup(c *gin.Context) {
 	// Parse group ID from URL
-	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.ParseInt(groupIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid group ID",
+			"error":   "Invalid group ID",
+			"details": "Group ID must be a valid integer",
 		})
 		return
 	}
 
-	// Retrieve group
-	group, err := h.groupRepo.GetGroupByID(c.Request.Context(), groupID)
+	// Fetch group details
+	group, err := h.groupRepo.GetByID(c.Request.Context(), groupID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Group not found",
@@ -85,90 +82,18 @@ func (h *GroupHandler) GetGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, group)
 }
 
-// GetGroupWords handles retrieving words in a group
+// GetGroupWords handles GET /api/v1/groups/:id/words
 func (h *GroupHandler) GetGroupWords(c *gin.Context) {
-	// Parse group ID from URL
-	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid group ID",
-		})
-		return
-	}
-
-	// Parse query parameters with defaults
-	params := models.DefaultGroupQueryParams()
-
-	// Override with request parameters if provided
-	if page, exists := c.GetQuery("page"); exists {
-		if pageNum, err := strconv.Atoi(page); err == nil && pageNum > 0 {
-			params.Page = pageNum
-		}
-	}
-
-	if perPage, exists := c.GetQuery("words_per_page"); exists {
-		if num, err := strconv.Atoi(perPage); err == nil && num > 0 {
-			params.PerPage = num
-		}
-	}
-
-	if sortBy, exists := c.GetQuery("sort_by"); exists {
-		params.SortBy = sortBy
-	}
-
-	if order, exists := c.GetQuery("order"); exists {
-		params.Order = order
-	}
-
-	// Retrieve group words
-	wordsResponse, err := h.groupRepo.GetGroupWords(c.Request.Context(), groupID, params)
-	if err != nil {
-		// Check if it's a "not found" error
-		if err.Error() == "group not found" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "Group not found",
-				"details": err.Error(),
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to retrieve group words",
-				"details": err.Error(),
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, wordsResponse)
+	// TODO: Implement group words endpoint
+	c.JSON(http.StatusNotImplemented, gin.H{
+		"error": "Not implemented",
+	})
 }
 
-// GetGroupWordsRaw handles retrieving raw word details for a group
+// GetGroupWordsRaw handles GET /api/v1/groups/:id/words/raw
 func (h *GroupHandler) GetGroupWordsRaw(c *gin.Context) {
-	// Parse group ID from URL
-	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid group ID",
-		})
-		return
-	}
-
-	// Retrieve raw group words
-	rawWordsResponse, err := h.groupRepo.GetGroupWordsRaw(c.Request.Context(), groupID)
-	if err != nil {
-		// Check if it's a "not found" error
-		if err.Error() == "group not found" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "Group not found",
-				"details": err.Error(),
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to retrieve raw group words",
-				"details": err.Error(),
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, rawWordsResponse)
+	// TODO: Implement raw group words endpoint
+	c.JSON(http.StatusNotImplemented, gin.H{
+		"error": "Not implemented",
+	})
 }

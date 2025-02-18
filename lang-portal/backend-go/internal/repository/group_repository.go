@@ -3,30 +3,33 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
-
-	"lang-portal/internal/models"
 )
 
-// GroupRepository defines methods for group-related database operations
-type GroupRepository interface {
-	// GetGroups retrieves a list of groups with pagination and sorting
-	GetGroups(ctx context.Context, params models.GroupQueryParams) (*models.GroupsResponse, error)
-
-	// GetGroupByID retrieves a specific group by its ID
-	GetGroupByID(ctx context.Context, groupID int64) (*models.Group, error)
-
-	// GetGroupWords retrieves words in a group with pagination and sorting
-	GetGroupWords(ctx context.Context, groupID int64, params models.GroupQueryParams) (*models.GroupWordsResponse, error)
-
-	// GetGroupWordsRaw retrieves raw word details for a group
-	GetGroupWordsRaw(ctx context.Context, groupID int64) (*models.RawGroupWordsResponse, error)
+// GroupListItem represents a group in the list view
+type GroupListItem struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	WordCount int    `json:"word_count"`
 }
 
-// SQLGroupRepository implements GroupRepository for SQL databases
+// GroupDetails represents detailed information about a group
+type GroupDetails struct {
+	ID             int64  `json:"id"`
+	Name           string `json:"name"`
+	TotalWordCount int    `json:"total_word_count"`
+}
+
+// GroupRepository defines the interface for group-related database operations
+type GroupRepository interface {
+	// List retrieves groups with optional pagination
+	List(ctx context.Context, page, groupsPerPage int) ([]GroupListItem, int, error)
+
+	// GetByID retrieves detailed information about a specific group
+	GetByID(ctx context.Context, groupID int64) (*GroupDetails, error)
+}
+
+// SQLGroupRepository implements GroupRepository using SQLite
 type SQLGroupRepository struct {
 	db *sql.DB
 }
@@ -36,217 +39,73 @@ func NewGroupRepository(db *sql.DB) *SQLGroupRepository {
 	return &SQLGroupRepository{db: db}
 }
 
-// GetGroups retrieves a list of groups with pagination and sorting
-func (r *SQLGroupRepository) GetGroups(ctx context.Context, params models.GroupQueryParams) (*models.GroupsResponse, error) {
-	// Validate and sanitize sorting parameters
-	validSortColumns := map[string]bool{
-		"name":        true,
-		"words_count": true,
-	}
-	if !validSortColumns[params.SortBy] {
-		params.SortBy = "name"
-	}
-	if params.Order != "asc" && params.Order != "desc" {
-		params.Order = "asc"
-	}
+// List retrieves groups with pagination
+func (r *SQLGroupRepository) List(ctx context.Context, page, groupsPerPage int) ([]GroupListItem, int, error) {
+	// Calculate pagination
+	offset := (page - 1) * groupsPerPage
 
-	// Construct the order by clause
-	orderBy := fmt.Sprintf("%s %s", params.SortBy, params.Order)
-
-	// Calculate offset
-	offset := (params.Page - 1) * params.PerPage
-
-	// Query to get groups
-	query := fmt.Sprintf(`
-		SELECT id, name, words_count
-		FROM groups
-		ORDER BY %s
-		LIMIT ? OFFSET ?
-	`, orderBy)
-
-	rows, err := r.db.QueryContext(ctx, query, params.PerPage, offset)
+	// Count total groups
+	countQuery := `SELECT COUNT(*) FROM groups`
+	var totalGroups int
+	err := r.db.QueryRowContext(ctx, countQuery).Scan(&totalGroups)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query groups: %w", err)
+		return nil, 0, fmt.Errorf("failed to count groups: %w", err)
+	}
+
+	// Query to fetch groups with word count
+	query := `
+		SELECT 
+			g.id, 
+			g.name, 
+			g.words_count
+		FROM groups g
+		ORDER BY g.name
+		LIMIT ? OFFSET ?
+	`
+	rows, err := r.db.QueryContext(ctx, query, groupsPerPage, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list groups: %w", err)
 	}
 	defer rows.Close()
 
-	var groups []models.Group
+	var groups []GroupListItem
 	for rows.Next() {
-		var group models.Group
-		if err := rows.Scan(&group.ID, &group.Name, &group.WordsCount); err != nil {
-			return nil, fmt.Errorf("failed to scan group: %w", err)
+		var group GroupListItem
+		if err := rows.Scan(
+			&group.ID,
+			&group.Name,
+			&group.WordCount,
+		); err != nil {
+			return nil, 0, fmt.Errorf("failed to scan group: %w", err)
 		}
 		groups = append(groups, group)
 	}
 
-	// Get total groups count for pagination
-	var totalGroups int
-	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM groups").Scan(&totalGroups)
-	if err != nil {
-		return nil, fmt.Errorf("failed to count total groups: %w", err)
-	}
-	totalPages := (totalGroups + params.PerPage - 1) / params.PerPage
-
-	return &models.GroupsResponse{
-		Groups:      groups,
-		TotalPages:  totalPages,
-		CurrentPage: params.Page,
-	}, nil
+	return groups, totalGroups, nil
 }
 
-// GetGroupByID retrieves a specific group by its ID
-func (r *SQLGroupRepository) GetGroupByID(ctx context.Context, groupID int64) (*models.Group, error) {
+// GetByID retrieves detailed information about a specific group
+func (r *SQLGroupRepository) GetByID(ctx context.Context, groupID int64) (*GroupDetails, error) {
 	query := `
-		SELECT id, name, words_count
+		SELECT 
+			id, 
+			name, 
+			words_count
 		FROM groups
 		WHERE id = ?
 	`
-	var group models.Group
-	err := r.db.QueryRowContext(ctx, query, groupID).Scan(&group.ID, &group.Name, &group.WordsCount)
+	var group GroupDetails
+	err := r.db.QueryRowContext(ctx, query, groupID).Scan(
+		&group.ID,
+		&group.Name,
+		&group.TotalWordCount,
+	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("group not found: %w", err)
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("group not found")
 		}
-		return nil, fmt.Errorf("failed to retrieve group: %w", err)
+		return nil, fmt.Errorf("failed to get group details: %w", err)
 	}
 
 	return &group, nil
-}
-
-// GetGroupWords retrieves words in a group with pagination and sorting
-func (r *SQLGroupRepository) GetGroupWords(ctx context.Context, groupID int64, params models.GroupQueryParams) (*models.GroupWordsResponse, error) {
-	// Validate and sanitize sorting parameters
-	validSortColumns := map[string]string{
-		"kanji":         "w.kanji",
-		"romaji":        "w.romaji",
-		"english":       "w.english",
-		"correct_count": "COALESCE(wr.correct_count, 0)",
-		"wrong_count":   "COALESCE(wr.wrong_count, 0)",
-	}
-	sqlColumn, ok := validSortColumns[params.SortBy]
-	if !ok {
-		params.SortBy = "kanji"
-		sqlColumn = validSortColumns["kanji"]
-	}
-	if params.Order != "asc" && params.Order != "desc" {
-		params.Order = "asc"
-	}
-
-	// Calculate offset
-	offset := (params.Page - 1) * params.PerPage
-
-	// First, verify the group exists
-	_, err := r.GetGroupByID(ctx, groupID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Query to get words in the group
-	query := fmt.Sprintf(`
-		SELECT 
-			w.id, 
-			w.kanji, 
-			w.romaji, 
-			w.english, 
-			COALESCE(wr.correct_count, 0) as correct_count,
-			COALESCE(wr.wrong_count, 0) as wrong_count
-		FROM words w
-		JOIN word_groups wg ON w.id = wg.word_id
-		LEFT JOIN word_reviews wr ON w.id = wr.word_id
-		WHERE wg.group_id = ?
-		ORDER BY %s %s
-		LIMIT ? OFFSET ?
-	`, sqlColumn, strings.ToUpper(params.Order))
-
-	rows, err := r.db.QueryContext(ctx, query, groupID, params.PerPage, offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query group words: %w", err)
-	}
-	defer rows.Close()
-
-	var words []models.GroupWord
-	for rows.Next() {
-		var word models.GroupWord
-		if err := rows.Scan(
-			&word.ID, 
-			&word.Kanji, 
-			&word.Romaji, 
-			&word.English, 
-			&word.CorrectCount, 
-			&word.WrongCount,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan word: %w", err)
-		}
-		words = append(words, word)
-	}
-
-	// Get total words count for pagination
-	var totalWords int
-	err = r.db.QueryRowContext(ctx, 
-		"SELECT COUNT(*) FROM word_groups WHERE group_id = ?", 
-		groupID,
-	).Scan(&totalWords)
-	if err != nil {
-		return nil, fmt.Errorf("failed to count total words: %w", err)
-	}
-	totalPages := (totalWords + params.PerPage - 1) / params.PerPage
-
-	return &models.GroupWordsResponse{
-		Words:       words,
-		TotalPages:  totalPages,
-		CurrentPage: params.Page,
-	}, nil
-}
-
-// GetGroupWordsRaw retrieves raw word details for a group
-func (r *SQLGroupRepository) GetGroupWordsRaw(ctx context.Context, groupID int64) (*models.RawGroupWordsResponse, error) {
-	// First, verify the group exists and get its name
-	group, err := r.GetGroupByID(ctx, groupID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Query to get raw word details
-	query := `
-		SELECT 
-			w.id, 
-			w.kanji, 
-			w.romaji, 
-			w.english, 
-			w.parts
-		FROM words w
-		JOIN word_groups wg ON w.id = wg.word_id
-		WHERE wg.group_id = ?
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, groupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query raw group words: %w", err)
-	}
-	defer rows.Close()
-
-	var words []models.RawWord
-	for rows.Next() {
-		var word models.RawWord
-		var partsJSON []byte
-		if err := rows.Scan(
-			&word.ID, 
-			&word.Kanji, 
-			&word.Romaji, 
-			&word.English, 
-			&partsJSON,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan raw word: %w", err)
-		}
-		
-		// Parse parts JSON
-		word.Parts = json.RawMessage(partsJSON)
-		words = append(words, word)
-	}
-
-	return &models.RawGroupWordsResponse{
-		GroupID:   groupID,
-		GroupName: group.Name,
-		Words:     words,
-	}, nil
 }

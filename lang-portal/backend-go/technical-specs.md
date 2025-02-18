@@ -306,7 +306,7 @@ We have the following tables:
 
 ### Study Sessions
 
-- GET `api/v1/study-sessions`
+- [x] GET `api/v1/study-sessions`
   - **Query Parameters**:
     - `page` (optional, default: 1)
     - `sessions_per_page` (optional, default: 100)
