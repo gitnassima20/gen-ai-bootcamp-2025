@@ -33,7 +33,7 @@ ifconfig
 
 Or you can try this way `$(hostname -I | awk '{print $1}')`
 
-HOST_IP=$(hostname -I | awk '{print $1}') NO_PROXY=localhost LLM_ENDPOINT_PORT=8008 LLM_MODEL_ID="llama3.2:1b" docker compose up
+HOST_IP=$(hostname -I | awk '{print $1}') NO_PROXY=localhost LLM_ENDPOINT_PORT=9000 LLM_MODEL_ID="llama3.2:1b" docker compose up
 
 ### Ollama API
 
@@ -44,7 +44,7 @@ Once the Ollama server os running we can make a request to it:
 ## Download (Pull) the model
 
 ``` sh
-curl --noproxy "*" http://localhost:8008/api/pull -d '{
+curl --noproxy "*" http://localhost:9000/api/pull -d '{
   "model": "llama3.2:1b"
 }'
 ```
@@ -52,7 +52,7 @@ curl --noproxy "*" http://localhost:8008/api/pull -d '{
 ## Generate a Request
 
 ``` sh
-curl --noproxy "*" http://localhost:8008/api/generate -d '{
+curl --noproxy "*" http://localhost:9000/api/generate -d '{
   "model": "llama3.2:1b",
   "prompt":"Why is the sky blue?"
 }'
