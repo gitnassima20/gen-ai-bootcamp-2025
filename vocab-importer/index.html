@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="./public/output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-brand-background min-h-screen flex flex-col items-center justify-center font-sans">
+    <div class="w-full max-w-xl bg-white shadow-lg rounded-xl p-8">
+        <h1 class="text-3xl font-bold text-center text-brand-primary mb-6">Vocab Generator</h1>
+        
+        <div class="flex space-x-4 mb-6">
+            <input 
+                type="text" 
+                id="topic" 
+                placeholder="Enter a topic (e.g., Weather, Technology)" 
+                class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            >
+            <button 
+                onclick="generateVocab()" 
+                class="bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+            >
+                Generate
+            </button>
+            <button 
+                onclick="exportJSON()" 
+                class="bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+            >
+                Export JSON
+            </button>
+            <input 
+                type="file" 
+                accept="application/json" 
+                onchange="importJSON(event)" 
+                class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            >
+        </div>
+
+        <div 
+            id="loading" 
+            class="hidden text-center text-brand-secondary animate-pulse"
+        >
+            Generating vocabulary...
+        </div>
+
+        <ul 
+            id="vocabList" 
+            class="space-y-4"
+        ></ul>
+    </div>
+
+    <script>
+        async function generateVocab() {
+            const topic = document.getElementById("topic").value;
+            const loadingIndicator = document.getElementById("loading");
+            const vocabList = document.getElementById("vocabList");
+
+            // Show loading, hide previous results
+            loadingIndicator.classList.remove("hidden");
+            vocabList.innerHTML = '';
+
+            try {
+                const response = await axios.post("http://localhost:5000/generate", { topic });
+                const data = response.data;
+                
+                // Hide loading
+                loadingIndicator.classList.add("hidden");
+                
+                // Render vocabulary
+                data.words.forEach(word => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-gray-50 p-4 rounded-lg shadow-sm';
+                    
+                    li.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-2xl font-bold text-brand-primary">${word.kanji}</div>
+                            <div class="text-sm text-gray-500">${word.romaji}</div>
+                        </div>
+                        <div class="text-lg text-gray-700 mb-2">${word.english}</div>
+                        <div class="text-sm text-gray-500">
+                            Parts: ${word.parts.map(part => 
+                                `<span class="bg-brand-secondary/10 px-2 py-1 rounded mr-2">${part.kanji} (${part.romaji.join('/')})</span>`
+                            ).join('')}
+                        </div>
+                    `;
+                    
+                    vocabList.appendChild(li);
+                });
+            } catch (error) {
+                loadingIndicator.textContent = "Error generating vocabulary. Please try again.";
+                console.error(error);
+            }
+        }
+
+        function exportJSON() {
+            const words = [...document.querySelectorAll("#vocabList .bg-gray-50")].map(item => {
+                const kanji = item.querySelector('.text-2xl').textContent;
+                const romaji = item.querySelector('.text-sm').textContent;
+                const english = item.querySelector('.text-lg').textContent;
+                const partsText = item.querySelector('.text-sm').nextElementSibling.textContent;
+                
+                // Parse parts
+                const parts = partsText.replace('Parts: ', '').split(' ').map(part => {
+                    const [kanji, romaji] = part.split(' (');
+                    return {
+                        kanji: kanji,
+                        romaji: romaji ? romaji.replace(')', '').split('/') : []
+                    };
+                });
+                
+                return { kanji, romaji, english, parts };
+            });
+            
+            const blob = new Blob([JSON.stringify({ words }, null, 2)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "vocab.json";
+            a.click();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = JSON.parse(e.target.result);
+                const vocabList = document.getElementById("vocabList");
+                vocabList.innerHTML = '';
+                
+                data.words.forEach(word => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-gray-50 p-4 rounded-lg shadow-sm';
+                    
+                    li.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-2xl font-bold text-brand-primary">${word.kanji}</div>
+                            <div class="text-sm text-gray-500">${word.romaji}</div>
+                        </div>
+                        <div class="text-lg text-gray-700 mb-2">${word.english}</div>
+                        <div class="text-sm text-gray-500">
+                            Parts: ${word.parts.map(part => 
+                                `<span class="bg-brand-secondary/10 px-2 py-1 rounded mr-2">${part.kanji} (${part.romaji.join('/')})</span>`
+                            ).join('')}
+                        </div>
+                    `;
+                    
+                    vocabList.appendChild(li);
+                });
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
