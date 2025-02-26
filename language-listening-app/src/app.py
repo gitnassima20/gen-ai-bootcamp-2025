@@ -20,79 +20,50 @@ class LanguageListeningApp:
         self.tts_engine = pyttsx3.init()
 
     def process_structured_transcript(self, video_id, language_level):
-        """
-        Process and structure YouTube transcript
-        
-        Args:
-            video_id (str): YouTube video ID
-            language_level (str): Language difficulty level
-        
-        Returns:
-            dict: Structured transcript content
-        """
-        # Download full transcript
-        full_transcript = self.transcript_downloader.get_transcript(video_id)
+        # Fetch the transcript
+        full_transcript = self.transcript_downloader.get_transcript(video_id, languages=['ja'])
         
         if not full_transcript:
             return None
-        
-        # Extract text
-        full_text = self.transcript_downloader.extract_text_from_transcript(full_transcript)
-        
-        # Split transcript into sections (simplified approach)
-        sections = self._split_transcript_into_sections(full_text)
-        
-        # Generate additional questions if not provided in transcript
-        generated_questions = self.comprehension_generator.generate_multiple_choice(
-            sections['conversation'], num_questions=3
-        )
-        
-        # Print structured content before insertion
-        print(f"""
-===== Structured Transcript Content =====
-Video ID: {video_id}
-Language Level: {language_level}
 
---- Introduction ---
-{sections['introduction']}
+        # Initialize sections
+        structured_content = []
 
---- Conversation ---
-{sections['conversation']}
+        # Temporary variables to hold current situation, conversation, and question
+        current_situation = None
+        current_conversation = None
+        current_question = None
 
---- Generated Questions ---
-{generated_questions}
-===============================
-""")
-        
-        # Store structured content
-        self.vector_store.insert_structured_transcript(
-            video_id=video_id,
-            language_level=language_level,
-            introduction=sections['introduction'],
-            conversation=sections['conversation'],
-            questions=generated_questions
-        )
-        
-        return sections
+        # Logic to structure the transcript
+        for entry in full_transcript:
+            text = entry['text']
+            
+            if "男" in text and "女" in text:  # Identify situations
+                if current_situation:  # If there is a previous situation, store it
+                    structured_content.append({
+                        "situation": current_situation,
+                        "conversation": current_conversation,
+                        "question": current_question
+                    })
+                current_situation = text  # Update current situation
+                current_conversation = None  # Reset conversation and question
+                current_question = None
+            
+            elif "もしもし" in text:  # Check for conversation starters
+                current_conversation = text  # Capture conversation
+            
+            elif "質問" in text:  # Check for question markers
+                current_question = text  # Capture question
 
-    def _split_transcript_into_sections(self, full_text):
-        """
-        Split transcript into introduction, conversation, and questions sections
-        
-        Args:
-            full_text (str): Complete transcript text
-        
-        Returns:
-            dict: Structured transcript sections
-        """
-        # Very basic splitting logic - you might want to improve this
-        sentences = full_text.split('.')
-        
-        return {
-            'introduction': '. '.join(sentences[:3]) + '.',
-            'conversation': '. '.join(sentences[3:-3]) + '.',
-            'questions': '. '.join(sentences[-3:]) + '.'
-        }
+        # Append the last set if available
+        if current_situation:
+            structured_content.append({
+                "situation": current_situation,
+                "conversation": current_conversation,
+                "question": current_question
+            })
+
+        return structured_content
 
     def retrieve_similar_content(self, query, search_type='all'):
         """
@@ -108,7 +79,7 @@ Language Level: {language_level}
         return self.vector_store.search_similar_content(query, search_type)
 
 def main():
-    st.title("Structured Language Listening Comprehension App")
+    st.title("Language Listening Comprehension App")
     
     app = LanguageListeningApp()
     
@@ -128,11 +99,13 @@ def main():
         
         if structured_content:
             # Display Sections
-            st.subheader("Introduction")
-            st.write(structured_content['introduction'])
-            
-            st.subheader("Conversation")
-            st.write(structured_content['conversation'])
+            for i, content in enumerate(structured_content):
+                st.subheader(f"Section {i+1}")
+                st.write(f"Situation: {content['situation']}")
+                if content['conversation']:
+                    st.write(f"Conversation: {content['conversation']}")
+                if content['question']:
+                    st.write(f"Question: {content['question']}")
             
             # Semantic Search
             st.subheader("Semantic Content Search")

@@ -2,7 +2,7 @@ from transformers import pipeline
 import random
 
 class ComprehensionGenerator:
-    def __init__(self, model_name='facebook/bart-large-cnn'):
+    def __init__(self, model_name='rinna/japanese-gpt2-medium'):
         """
         Initialize text generation and summarization model
         
@@ -29,7 +29,7 @@ class ComprehensionGenerator:
         # Generate questions based on summary
         questions = []
         for _ in range(num_questions):
-            prompt = f"Generate a detailed comprehension question about this text: {summary}"
+            prompt = f"次の文章に基づいて理解度を測る質問を生成してください: {summary}"
             question = self.generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
             questions.append(question.split(prompt)[-1].strip())
         

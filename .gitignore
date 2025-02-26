@@ -17,6 +17,7 @@ venv/
 
 # SQLite databases
 *.db
+chroma_db/
 
 # Jupyter Notebook
 .ipynb_checkpoints
