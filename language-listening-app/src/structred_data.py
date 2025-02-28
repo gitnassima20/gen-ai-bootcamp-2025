@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-import re
 import requests
 from dotenv import load_dotenv
+from datetime import datetime
 
 class TranScriptStructure:
     def __init__(self):
@@ -18,31 +18,23 @@ class TranScriptStructure:
         # API endpoint for Gemini 2.0 Flash
         self.api_endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.api_key}"
     
-    def structure_transcript(self, transcript: str) -> dict:
-        # Detailed, structured prompt for Gemini
-        prompt = f"""Carefully analyze the following JLPT Listening Comprehension Transcript:
+    def structure_transcript(self, transcript: str) -> list:
+        # Prompt to extract all conversation cases
+        prompt = f"""Analyze the entire transcript and systematically extract information for EACH CONVERSATION CASE:
+
+For EACH case (Case 0, Case 1, etc.), extract:
+1. Situation description
+2. Full conversation details
+3. Specific question for that case
+
+IMPORTANT GUIDELINES:
+- Skip initial test instructions
+- Extract EXACTLY as they appear in the original transcript
+- Provide a structured output for EACH case
+- Include all cases present in the transcript
+- Maintain original language
 
 Transcript: {transcript}
-
-IMPORTANT: Provide a detailed, structured JSON response with these exact keys:
-
-{{
-    "introduction": "Describe the initial context, setting, and participants of the conversation in detail.",
-    "conversation": "Provide a comprehensive summary of the dialogue, including key interactions and main points.",
-    "question": "Identify and clearly state the specific comprehension question or challenge in the transcript.",
-    "analysis": {{
-        "language_skills_tested": "Specify the exact language skills being evaluated",
-        "difficulty_level": "Determine the JLPT difficulty level (N5-N1)",
-        "key_vocabulary": ["list", "of", "important", "words"],
-        "grammatical_points": ["list", "of", "key", "grammar", "structures"]
-    }}
-}}
-
-Guidelines:
-- Be extremely specific and detailed
-- Focus on educational insights
-- Ensure the JSON is valid and complete
-- If no clear question is present, explain why
 """
         
         try:
@@ -52,8 +44,8 @@ Guidelines:
                     "parts": [{"text": prompt}]
                 }],
                 "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 2048
+                    "temperature": 0.1,  # Extremely low for precise extraction
+                    "maxOutputTokens": 4096  # Increased to accommodate multiple cases
                 }
             }
             
@@ -71,6 +63,9 @@ Guidelines:
             response_data = response.json()
             generated_text = response_data['candidates'][0]['content']['parts'][0]['text']
             
+            # Save raw Gemini response to file
+            self._save_gemini_response(response_data)
+            
             # Log the raw response for debugging
             logging.info(f"Raw Gemini Response: {generated_text}")
             
@@ -80,43 +75,88 @@ Guidelines:
                 clean_text = generated_text.strip('```json\n```')
                 structured_data = json.loads(clean_text)
                 
-                # Validate the structure
-                if not all(key in structured_data for key in ['introduction', 'conversation', 'question']):
-                    raise ValueError("Missing required keys in JSON response")
+                # Ensure we have a list of cases
+                if not isinstance(structured_data, list):
+                    structured_data = [structured_data]
                 
-                return structured_data
+                # Standardize the output
+                cases = []
+                for case in structured_data:
+                    cases.append({
+                        "situation": case.get("situation", ""),
+                        "conversation": case.get("conversation", ""),
+                        "question": case.get("question", "")
+                    })
+                
+                # Save cases to a text file
+                self._save_cases_to_file(cases, response_data)
+                
+                # Print formatted cases to console
+                self._print_formatted_cases(cases)
+                
+                return cases
             
             except (json.JSONDecodeError, ValueError) as json_error:
-                # Fallback parsing if JSON fails
+                # Fallback manual extraction
                 logging.warning(f"JSON parsing failed: {json_error}")
-                logging.warning(f"Attempting manual extraction from text: {generated_text}")
                 
-                return {
-                    "introduction": self._extract_section(generated_text, "introduction"),
-                    "conversation": self._extract_section(generated_text, "conversation"),
-                    "question": self._extract_section(generated_text, "question")
-                }
+                # Manual case extraction
+                cases = self._extract_cases(response_data)
+                
+                # Save cases to a text file
+                self._save_cases_to_file(cases, response_data)
+                
+                # Print formatted cases to console
+                self._print_formatted_cases(cases)
+                
+                return cases
         
         except Exception as e:
-            logging.error(f"Comprehensive error generating structured transcript: {e}")
-            # Log the full error details
+            logging.error(f"Error generating structured transcript: {e}")
             logging.exception("Full error traceback:")
             
-            return {
-                "introduction": f"Error in analysis: {str(e)}",
-                "conversation": "",
-                "question": ""
-            }
+            return []
     
-    def _extract_section(self, text: str, section: str) -> str:
+    def _save_gemini_response(self, response_data: dict):
         """
-        Manually extract a section from the text if JSON parsing fails
+        Save the raw Gemini API response to a file in the transcripts folder
         """
         try:
-            # More robust regex to extract section
-            pattern = rf'"{section}":\s*"(.*?)"'
-            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
-            return match.group(1).strip() if match else ""
+            # Ensure the transcripts directory exists
+            transcripts_dir = os.path.join(os.path.dirname(__file__), 'transcripts')
+            os.makedirs(transcripts_dir, exist_ok=True)
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"gemini_raw_response_{timestamp}.json"
+            filepath = os.path.join(transcripts_dir, filename)
+            
+            # Write raw response to file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(response_data, f, ensure_ascii=False, indent=2)
+            
+            logging.info(f"Raw Gemini response saved to {filepath}")
+        
         except Exception as e:
-            logging.error(f"Error extracting {section}: {e}")
-            return ""
+            logging.error(f"Error saving Gemini response to file: {e}")
+    
+    def _extract_cases(self, response_data: dict) -> list:
+        """
+        Extract cases from the Gemini API response
+        """
+        try:
+            # Directly use the parts from the response
+            cases = []
+            for part in response_data.get('parts', []):
+                if isinstance(part, dict):
+                    cases.append({
+                        'situation': part.get('Situation description', ''),
+                        'conversation': part.get('Full conversation details', ''),
+                        'question': part.get('Specific question', '')
+                    })
+            
+            return cases
+        
+        except Exception as e:
+            logging.error(f"Error extracting cases: {e}")
+            return []

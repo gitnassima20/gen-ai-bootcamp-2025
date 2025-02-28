@@ -43,7 +43,7 @@ class LanguageListeningApp:
         return structured_response
 
 def main():
-    st.title("Language Listening Comprehension App")
+    st.title("⛩️ Listening Comprehension Practice ⛩️")
     
     app = LanguageListeningApp()
     
