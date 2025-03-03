@@ -62,3 +62,11 @@ streamlit run src/app.py
 1. Introduction()
 2. Conversation
 3. Questions
+
+## RoadMap:
+
+-[] Strcuture data after downloading the transcript
+-[] Generate options for each question in the cases
+-[] Vector database to store the structured data + options + answer
+-[] LangChain agent?
+-[] TTS by using vosk 
