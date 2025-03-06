@@ -51,3 +51,7 @@ The Grading System will do the following:
 - Use an LLM to produce literal translation of the transcription.
 - Use another LLM to grade.
 - Return the result to the frontend app.
+
+## Enhancements to add later
+
+- [] Let the user select the group to train on.

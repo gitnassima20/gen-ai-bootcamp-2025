@@ -6,9 +6,6 @@ import tempfile
 import os
 from manga_ocr import MangaOcr
 
-# st.sidebar.page_link("pages/0_setup.py", label="⚙️ Setup")
-# st.sidebar.page_link("pages/1_practice.py", label="✍️ Practice")
-# st.sidebar.page_link("pages/2_review.py", label="📖 Review")
 
 pg = st.navigation([st.Page(page="00_setup.py", url_path='setup'),
                     st.Page(page="01_practice.py", url_path='practice_writing'),
