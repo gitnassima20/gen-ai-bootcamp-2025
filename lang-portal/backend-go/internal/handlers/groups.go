@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"lang-portal/internal/repository"
+
+	"github.com/gin-gonic/gin"
 )
 
 // GroupHandler handles HTTP requests related to groups
@@ -196,8 +197,42 @@ func (h *GroupHandler) GetGroupStudySessions(c *gin.Context) {
 
 // GetGroupWordsRaw handles GET /api/v1/groups/:id/words/raw
 func (h *GroupHandler) GetGroupWordsRaw(c *gin.Context) {
-	// TODO: Implement raw group words endpoint
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"error": "Not implemented",
-	})
+	// Parse group ID from URL
+	groupIDStr := c.Param("id")
+	groupID, err := strconv.ParseInt(groupIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid group ID",
+			"details": "Group ID must be a valid integer",
+		})
+		return
+	}
+
+	// Fetch group details to check if group exists
+	group, err := h.groupRepo.GetByID(c.Request.Context(), groupID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Group not found",
+		})
+		return
+	}
+
+	// Fetch words for the group
+	words, err := h.groupRepo.GetGroupWordsRaw(c.Request.Context(), groupID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to retrieve group words",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Prepare the response
+	result := gin.H{
+		"group_id":   groupID,
+		"group_name": group.Name,
+		"words":      words,
+	}
+
+	c.JSON(http.StatusOK, result)
 }
