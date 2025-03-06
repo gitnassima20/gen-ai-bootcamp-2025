@@ -41,13 +41,19 @@ type GroupStudySessionItem struct {
 	TotalWordsReviewed int       `json:"total_words_reviewed"`
 }
 
+// WordPart represents a part of a word
+type WordPart struct {
+	Kanji  string   `json:"kanji"`
+	Romaji []string `json:"romaji"`
+}
+
 // RawGroupWordItem represents a raw word in a group
 type RawGroupWordItem struct {
-	ID      int64       `json:"id"`
-	Kanji   string      `json:"kanji"`
-	Romaji  string      `json:"romaji"`
-	English string      `json:"english"`
-	Parts   interface{} `json:"parts"`
+	ID      int64      `json:"id"`
+	Kanji   string     `json:"kanji"`
+	Romaji  string     `json:"romaji"`
+	English string     `json:"english"`
+	Parts   []WordPart `json:"parts"`
 }
 
 // GroupRepository defines the interface for group-related database operations

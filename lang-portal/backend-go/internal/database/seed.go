@@ -33,17 +33,24 @@ func SeedDatabase(db *sql.DB) error {
 	}
 
 	// Seed words
-	words, err := seedWords(tx)
+	wordIDs, err := seedWords(tx)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to seed words: %w", err)
 	}
 
 	// Seed groups
-	_, err = seedGroups(tx, words)
+	groupIDs, err := seedGroups(tx, wordIDs)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to seed groups: %w", err)
+	}
+
+	// Seed word-groups associations
+	err = seedWordGroups(tx, wordIDs, groupIDs)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to seed word-groups associations: %w", err)
 	}
 
 	// Commit transaction
@@ -55,16 +62,10 @@ func SeedDatabase(db *sql.DB) error {
 }
 
 func seedWords(tx *sql.Tx) ([]int64, error) {
-	// Read seed data
-	seedPath := filepath.Join("c:\\Users\\nassima\\Desktop\\gen-ai-bootcamp-2025\\lang-portal\\backend-go", "seed", "words.json")
-	data, err := os.ReadFile(seedPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read seed file: %w", err)
-	}
-
-	var words []Word
-	if err := json.Unmarshal(data, &words); err != nil {
-		return nil, fmt.Errorf("failed to parse seed data: %w", err)
+	// Word files to seed
+	wordFiles := []string{
+		filepath.Join("c:\\Users\\nassima\\Desktop\\gen-ai-bootcamp-2025\\lang-portal\\backend-go", "seed", "words_adjectives.json"),
+		filepath.Join("c:\\Users\\nassima\\Desktop\\gen-ai-bootcamp-2025\\lang-portal\\backend-go", "seed", "words_verbs.json"),
 	}
 
 	// Prepare word insert statement
@@ -79,26 +80,39 @@ func seedWords(tx *sql.Tx) ([]int64, error) {
 
 	// Insert words and track their IDs
 	var wordIDs []int64
-	for _, word := range words {
-		// Convert parts to JSON string
-		partsJSON, err := json.Marshal(word.Parts)
+	for _, seedPath := range wordFiles {
+		// Read seed data
+		data, err := os.ReadFile(seedPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal parts: %w", err)
+			return nil, fmt.Errorf("failed to read seed file %s: %w", seedPath, err)
 		}
 
-		// Insert word
-		result, err := wordStmt.Exec(word.Kanji, word.Romaji, word.English, string(partsJSON))
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert word: %w", err)
+		var words []Word
+		if err := json.Unmarshal(data, &words); err != nil {
+			return nil, fmt.Errorf("failed to parse seed data from %s: %w", seedPath, err)
 		}
 
-		// Get word ID
-		wordID, err := result.LastInsertId()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get last insert ID: %w", err)
-		}
+		for _, word := range words {
+			// Convert parts to JSON string
+			partsJSON, err := json.Marshal(word.Parts)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal parts: %w", err)
+			}
 
-		wordIDs = append(wordIDs, wordID)
+			// Insert word
+			result, err := wordStmt.Exec(word.Kanji, word.Romaji, word.English, string(partsJSON))
+			if err != nil {
+				return nil, fmt.Errorf("failed to insert word: %w", err)
+			}
+
+			// Get word ID
+			wordID, err := result.LastInsertId()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get last insert ID: %w", err)
+			}
+
+			wordIDs = append(wordIDs, wordID)
+		}
 	}
 
 	return wordIDs, nil
@@ -153,7 +167,8 @@ func seedGroups(tx *sql.Tx, wordIDs []int64) ([]int64, error) {
 		}
 
 		// Add words to group (use a subset of words)
-		wordsToAdd := wordIDs[:group.WordsCount]
+		maxWords := min(len(wordIDs), group.WordsCount)
+		wordsToAdd := wordIDs[:maxWords]
 		for _, wordID := range wordsToAdd {
 			_, err = wordGroupStmt.Exec(wordID, groupID)
 			if err != nil {
@@ -165,4 +180,39 @@ func seedGroups(tx *sql.Tx, wordIDs []int64) ([]int64, error) {
 	}
 
 	return groupIDs, nil
+}
+
+func seedWordGroups(tx *sql.Tx, wordIDs []int64, groupIDs []int64) error {
+	// Prepare word_groups insert statement
+	wordGroupStmt, err := tx.Prepare(`
+		INSERT INTO word_groups (word_id, group_id)
+		VALUES (?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare word_groups insert statement: %w", err)
+	}
+	defer wordGroupStmt.Close()
+
+	// Instead of using fixed IDs from a JSON file, create associations dynamically
+	// This is a simplified example - adjust according to your needs
+	for i, wordID := range wordIDs {
+		// Assign each word to at least one group
+		groupIndex := i % len(groupIDs)
+		groupID := groupIDs[groupIndex]
+
+		_, err = wordGroupStmt.Exec(wordID, groupID)
+		if err != nil {
+			return fmt.Errorf("failed to insert word_group association: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// Helper function to get the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
