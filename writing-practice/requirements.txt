@@ -1,0 +1,7 @@
+streamlit==1.40.2
+streamlit-drawable-canvas
+pillow==10.2.0
+numpy==1.26.3
+manga-ocr==0.1.10
+python-dotenv==1.0.1
+google-generativeai==0.5.2
