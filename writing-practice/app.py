@@ -18,6 +18,14 @@ pg.run()
 def load_ocr_model():
     return MangaOcr()
 
+# Initialize session state
+if "words" not in st.session_state:
+    st.session_state.words = []
+if "sentence" not in st.session_state:
+    st.session_state.sentence = None
+if "stage" not in st.session_state:
+    st.session_state.stage = "setup"
+
 
 
 # def calculate_score(expected, actual):
