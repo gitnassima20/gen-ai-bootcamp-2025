@@ -61,6 +61,10 @@ else:
             image = Image.open(io.BytesIO(st.session_state.practice_image))
             st.image(image, caption="Your handwritten practice", use_container_width=True)
 
+            # Access OCR model from session state
+            mocr = st.session_state.ocr_model
+            ocr_text = mocr(image)
+
             # Call the grading function with the OCR text and original sentence
             grading_result = grade_transcription(ocr_text, st.session_state.sentence)
 
