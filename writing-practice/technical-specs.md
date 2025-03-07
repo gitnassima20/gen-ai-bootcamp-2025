@@ -54,4 +54,6 @@ The Grading System will do the following:
 
 ## Enhancements to add later
 
-- [] Let the user select the group to train on.
+- [] Set Preferences (Train on sentence or /word)
+- [] Call Review Items API if word is selected
+- [] Search for an LLM that would be capable to evaluate the quality of writing

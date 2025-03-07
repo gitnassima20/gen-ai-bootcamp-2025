@@ -4,7 +4,6 @@ import random
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
-import json
 
 # Load environment variables
 load_dotenv()
@@ -52,6 +51,7 @@ else:
         prompt = (
             f"Generate a very simple Japanese sentence using the word '{english}', "
             f"following JLPT N2 grammar rules."
+            f"Use at max three words in the sentence leveraging its simplicity"
             f"The Output will contain only the generated sentence, no other extra explanation"
         )
         model = genai.GenerativeModel("gemini-2.0-flash")
