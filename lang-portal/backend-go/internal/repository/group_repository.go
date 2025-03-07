@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -23,12 +24,12 @@ type GroupDetails struct {
 
 // GroupWordItem represents a word in a group
 type GroupWordItem struct {
-	ID            int64  `json:"id"`
-	Kanji         string `json:"kanji"`
-	Romaji        string `json:"romaji"`
-	English       string `json:"english"`
-	CorrectCount  int    `json:"correct_count"`
-	WrongCount    int    `json:"wrong_count"`
+	ID           int64  `json:"id"`
+	Kanji        string `json:"kanji"`
+	Romaji       string `json:"romaji"`
+	English      string `json:"english"`
+	CorrectCount int    `json:"correct_count"`
+	WrongCount   int    `json:"wrong_count"`
 }
 
 // GroupStudySessionItem represents a study session for a group
@@ -38,6 +39,21 @@ type GroupStudySessionItem struct {
 	StartTime          time.Time `json:"start_time"`
 	EndTime            time.Time `json:"end_time"`
 	TotalWordsReviewed int       `json:"total_words_reviewed"`
+}
+
+// WordPart represents a part of a word
+type WordPart struct {
+	Kanji  string   `json:"kanji"`
+	Romaji []string `json:"romaji"`
+}
+
+// RawGroupWordItem represents a raw word in a group
+type RawGroupWordItem struct {
+	ID      int64      `json:"id"`
+	Kanji   string     `json:"kanji"`
+	Romaji  string     `json:"romaji"`
+	English string     `json:"english"`
+	Parts   []WordPart `json:"parts"`
 }
 
 // GroupRepository defines the interface for group-related database operations
@@ -53,6 +69,9 @@ type GroupRepository interface {
 
 	// GetGroupStudySessions retrieves study sessions for a group with pagination
 	GetGroupStudySessions(ctx context.Context, groupID int64, page, sessionsPerPage int) ([]GroupStudySessionItem, int, error)
+
+	// GetGroupWordsRaw retrieves all words in a group without pagination
+	GetGroupWordsRaw(ctx context.Context, groupID int64) ([]RawGroupWordItem, error)
 }
 
 // SQLGroupRepository implements GroupRepository using SQLite
@@ -261,4 +280,56 @@ func (r *SQLGroupRepository) GetGroupStudySessions(ctx context.Context, groupID 
 	}
 
 	return sessions, totalSessions, nil
+}
+
+// GetGroupWordsRaw retrieves all words in a group without pagination
+func (r *SQLGroupRepository) GetGroupWordsRaw(ctx context.Context, groupID int64) ([]RawGroupWordItem, error) {
+	// First, verify the group exists
+	_, err := r.GetByID(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query to fetch words with their parts
+	query := `
+		SELECT 
+			w.id, 
+			w.kanji, 
+			w.romaji, 
+			w.english,
+			w.parts
+		FROM words w
+		JOIN word_groups wg ON w.id = wg.word_id
+		WHERE wg.group_id = ?
+		ORDER BY w.id
+	`
+	rows, err := r.db.QueryContext(ctx, query, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch group words: %w", err)
+	}
+	defer rows.Close()
+
+	var words []RawGroupWordItem
+	for rows.Next() {
+		var word RawGroupWordItem
+		var partsJSON string
+		if err := rows.Scan(
+			&word.ID,
+			&word.Kanji,
+			&word.Romaji,
+			&word.English,
+			&partsJSON,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan group word: %w", err)
+		}
+
+		// Unmarshal parts JSON
+		if err := json.Unmarshal([]byte(partsJSON), &word.Parts); err != nil {
+			return nil, fmt.Errorf("failed to parse word parts: %w", err)
+		}
+
+		words = append(words, word)
+	}
+
+	return words, nil
 }

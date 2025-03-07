@@ -1,10 +1,12 @@
 [
     {
-        "name": "Verbs Group 1",
-        "words_count": 3
+        "id": 1,
+        "name": "Core Adjectives",
+        "words_count": 0
     },
     {
-        "name": "Verbs Group 2",
-        "words_count": 2
+        "id": 2,
+        "name": "Core Verbs",
+        "words_count": 0
     }
 ]
