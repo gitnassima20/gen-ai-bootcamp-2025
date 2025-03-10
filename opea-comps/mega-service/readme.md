@@ -16,6 +16,10 @@ LLM_ENDPOINT_PORT=9000 docker-compose up
 python app.py
 ```
 
+## How to access the Jaeger UI
+
+After running the docker-compose the jaeger service will be available at `http://localhost:16686/search`
+
 ## How to make a request to the FastAPI
 
 ``` sh
