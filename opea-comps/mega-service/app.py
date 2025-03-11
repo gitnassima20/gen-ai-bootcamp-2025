@@ -100,13 +100,37 @@ class ExampleService:
         )
         
         print("\n\nresult_dict", result_dict)
-        # for node, response in result_dict.items():
-        #     if isinstance(response, StreamingResponse):
-        #         return response
-        # last_node = runtime_graph.all_leaves()[-1]
-        # print("\n\nlast_node",last_node)
-        # response = result_dict[last_node]["text"]
-        # print("\n\nresponse",response)
+        for node, response in result_dict.items():
+            if isinstance(response, StreamingResponse):
+                return response
+
+        last_node = runtime_graph.all_leaves()[-1]
+        node_response = result_dict[last_node]
+
+        # Add proper error handling and response extraction
+        if "error" in node_response:
+            # Handle error case - either return the error or a default message
+            error_msg = node_response["error"]["message"]
+            return JSONResponse(
+                status_code=400,
+                content={"error": error_msg}
+            )
+        elif "text" in node_response:
+            response_text = node_response["text"]
+        else:
+            # Try to extract text from other potential keys or use a default response
+            response_text = str(node_response)
+
+        choices = []
+        usage = UsageInfo()
+        choices.append(
+            ChatCompletionResponseChoice(
+                index=0,
+                message=ChatMessage(role="assistant", content=response_text),
+                finish_reason="stop",
+            )
+        )
+        return ChatCompletionResponse(model="chatqna", choices=choices, usage=usage)
         
         # try:
         #     # Comprehensive request validation and logging
