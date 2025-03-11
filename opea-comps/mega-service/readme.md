@@ -34,8 +34,33 @@ curl -X POST http://localhost:8000/v1/example-service \
     ],
     "model": "llama3.2:1b",
     "temperature": 0.7,
-    "max_tokens": 100
+    "max_tokens": 100,
+    "stream": false
   }'\
   -o output/response.json
 '
 ```
+
+## Resolving error
+
+### error:-`{'llm/MicroService': {'error': {'message': "[] is too short - 'messages'", 'type': 'invalid_request_error', 'param': None, 'code': None}}}`
+
+We adjust the `initial_inputs` to include the original messages
+
+```python
+initial_inputs={
+                "text": prompt,
+                "messages": chat_request.messages
+            },
+```
+
+### error:-`result_dict {'llm/MicroService': {'error': {'message': 'model is required', 'type': 'api_error', 'param': None, 'code': None}}}`
+
+the LLMParams were not passing the model
+```python
+parameters = LLMParams(
+            model=chat_request.model,
+            ...)
+```
+
+
