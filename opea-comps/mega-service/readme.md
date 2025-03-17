@@ -57,10 +57,9 @@ initial_inputs={
 ### error:-`result_dict {'llm/MicroService': {'error': {'message': 'model is required', 'type': 'api_error', 'param': None, 'code': None}}}`
 
 the LLMParams were not passing the model
-```python
+
+``` python
 parameters = LLMParams(
             model=chat_request.model,
             ...)
 ```
-
-
