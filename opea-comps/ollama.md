@@ -58,7 +58,7 @@ curl --noproxy "*" http://localhost:9000/api/generate -d '{
 }'
 ```
 
-# Technical Uncertainty
+## Technical Uncertainty
 
 - Q1: Does brisge mode mean we can only access Ollama API with another model in the docker compose ?
 - A1: No, the host machine can access it.

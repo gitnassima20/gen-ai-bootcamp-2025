@@ -6,57 +6,13 @@ from comps.cores.proto.api_protocol import (
     ChatMessage,
     UsageInfo
 )
+from comps.cores.proto.docarray import LLMParams
+from comps.cores.mega.utils import handle_message
 from comps.cores.mega.constants import ServiceType, ServiceRoleType
 from comps import MicroService, ServiceOrchestrator
+from fastapi import Request
+from fastapi.responses import StreamingResponse
 import os
-import sys
-import time
-import asyncio
-import logging
-
-# Aggressive OpenTelemetry and tracing disablement
-import os
-import sys
-
-# Disable all tracing and telemetry environment variables
-os.environ["TELEMETRY_ENDPOINT"] = ""
-os.environ["OTEL_SDK_DISABLED"] = "true"
-os.environ["OTEL_TRACES_EXPORTER"] = "none"
-os.environ["OTEL_METRICS_EXPORTER"] = "none"
-os.environ["OTEL_LOGS_EXPORTER"] = "none"
-os.environ["OTEL_PYTHON_DISABLED"] = "1"
-os.environ["OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED"] = "false"
-
-# Patch sys.modules to prevent OpenTelemetry initialization
-sys.modules['opentelemetry'] = None
-sys.modules['opentelemetry.trace'] = None
-sys.modules['opentelemetry.sdk.trace'] = None
-sys.modules['opentelemetry.exporter.otlp'] = None
-sys.modules['opentelemetry.instrumentation'] = None
-
-# Prevent any tracing or instrumentation
-try:
-    import opentelemetry
-    opentelemetry.disable_tracing()
-except (ImportError, AttributeError):
-    pass
-
-# Disable logging for specific modules
-import logging
-logging.getLogger('opentelemetry').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-logging.getLogger('requests').setLevel(logging.CRITICAL)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('megaservice.log')
-    ]
-)
-logger = logging.getLogger(__name__)
 
 EMBEDDING_SERVICE_HOST_IP = os.getenv("EMBEDDING_SERVICE_HOST_IP", "0.0.0.0")
 EMBEDDING_SERVICE_PORT = os.getenv("EMBEDDING_SERVICE_PORT", 6000)
@@ -66,7 +22,6 @@ LLM_SERVICE_PORT = os.getenv("LLM_SERVICE_PORT", 9000)
 
 class ExampleService:
     def __init__(self, host="0.0.0.0", port=8000):
-        print('Initializing ExampleService')
         self.host = host
         self.port = port
         self.endpoint = "/v1/example-service"
@@ -108,117 +63,179 @@ class ExampleService:
         self.service.add_route(self.endpoint, self.handle_request, methods=["POST"])
 
         self.service.start()
-    async def handle_request(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
-        try:
-            # Enhanced logging for request details
-            logger.debug(f"Received raw request type: {type(request)}")
-            logger.debug(f"Received request attributes: {vars(request) if hasattr(request, '__dict__') else request}")
-            
-            # Robust message content extraction
-            if isinstance(request, str):
-                message_content = request
-            elif hasattr(request, 'messages'):
-                if isinstance(request.messages, list) and request.messages:
-                    message_content = request.messages[0].content if hasattr(request.messages[0], 'content') else str(request.messages[0])
-                else:
-                    message_content = "Hello"
-            else:
-                logger.error(f"Unrecognized request format: {request}")
-                raise HTTPException(status_code=400, detail="Invalid request format")
-            
-            logger.info(f"Extracted message content: {message_content}")
-            
-            # Validate request before processing
-            if not message_content:
-                logger.warning("Empty message content received")
-                raise HTTPException(status_code=400, detail="Message content cannot be empty")
-            
-            # Log detailed debug information
-            logger.debug(f"Received request: {request}")
-            
-            # Log service connection attempt
-            logger.info(f"Attempting to connect to LLM service at {LLM_SERVICE_HOST_IP}:{LLM_SERVICE_PORT}")
-            
-            # Fallback mechanism if MegaService fails
-            try:
-                # Format the request for Ollama
-                ollama_request = {
-                    "model": "llama3.2:1b",
-                    "prompt": message_content
-                }
-                
-                # Log routing attempt
-                logger.debug("Routing request through MegaService")
-                
-                # Await the coroutine returned by schedule
-                response = await self.megaservice.schedule(ollama_request)
-                
-                # Log raw response for debugging
-                logger.debug(f"Raw MegaService response: {response}")
-                
-                # Extract response content
-                if isinstance(response, tuple) and len(response) > 0:
-                    # Try to extract response from the first element
-                    first_response = response[0]
-                    
-                    # Log first response for debugging
-                    logger.debug(f"First response: {first_response}")
-                    
-                    # Check if it's a dictionary with 'llm/MicroService'
-                    if isinstance(first_response, dict) and 'llm/MicroService' in first_response:
-                        llm_response = first_response['llm/MicroService']
-                        
-                        # Log LLM response for debugging
-                        logger.debug(f"LLM Response type: {type(llm_response)}")
-                        
-                        # If it's a StreamingResponse, try to get content
-                        if hasattr(llm_response, 'body_iterator'):
-                            # Consume the body iterator
-                            body_content = b''
-                            async for chunk in llm_response.body_iterator:
-                                body_content += chunk
-                            response_text = body_content.decode('utf-8')
-                        else:
-                            response_text = str(llm_response)
-                    else:
-                        response_text = str(first_response)
-                else:
-                    response_text = str(response)
-                
-                # Create a dictionary with the response
-                response = {"response": response_text}
-            except Exception as inference_error:
-                logger.error(f"MegaService routing failed: {inference_error}", exc_info=True)
-                # Fallback to a simple response
-                response = {"response": "Service is currently unavailable. Please try again later."}
-            
-            logger.info(f"Processed response: {response}")
-            
-            # Construct ChatCompletionResponse
-            return ChatCompletionResponse(
-                id="chatcmpl-123",
-                object="chat.completion",
-                created=int(time.time()),
-                model="llama3.2:1b",
-                choices=[
-                    ChatCompletionResponseChoice(
-                        index=0,
-                        message=ChatMessage(
-                            role="assistant", 
-                            content=response.get('response', 'No response')
-                        ),
-                        finish_reason="stop"
-                    )
-                ],
-                usage=UsageInfo(
-                    prompt_tokens=len(message_content.split()) if message_content else 0,
-                    completion_tokens=len(response.get('response', '').split()) if response else 0,
-                    total_tokens=0
-                )
+    async def handle_request(self, request: Request):
+        data = await request.json()
+        print("data", data)
+        stream_opt = data.get("stream", False)
+        print(stream_opt)
+        chat_request = ChatCompletionRequest.model_validate(data)
+        print(chat_request)
+        
+        # Instead of just passing the prompt text, pass the entire structured data
+        # that your microservice expects
+        prompt = handle_message(chat_request.messages)
+        
+        parameters = LLMParams(
+            model=chat_request.model,
+            max_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,
+            top_k=chat_request.top_k if chat_request.top_k else 10,
+            top_p=chat_request.top_p if chat_request.top_p else 0.95,
+            temperature=chat_request.temperature if chat_request.temperature else 0.01,
+            frequency_penalty=chat_request.frequency_penalty if chat_request.frequency_penalty else 0.0,
+            presence_penalty=chat_request.presence_penalty if chat_request.presence_penalty else 0.0,
+            repetition_penalty=chat_request.repetition_penalty if chat_request.repetition_penalty else 1.03,
+            stream=stream_opt,
+            chat_template=chat_request.chat_template if chat_request.chat_template else None,
+        )
+        
+        print("\n\nprompt", prompt, "\n\nparameters", parameters)
+        
+        # include both the original messages and the processed prompt
+        result_dict, runtime_graph = await self.megaservice.schedule(
+            initial_inputs={
+                "text": prompt,
+                "messages": chat_request.messages 
+            },
+            llm_parameters=parameters
+        )
+        
+        print("\n\nresult_dict", result_dict)
+        for node, response in result_dict.items():
+            if isinstance(response, StreamingResponse):
+                return response
+
+        last_node = runtime_graph.all_leaves()[-1]
+        node_response = result_dict[last_node]
+
+        # Add proper error handling and response extraction
+        if "error" in node_response:
+            # Handle error case - either return the error or a default message
+            error_msg = node_response["error"]["message"]
+            return JSONResponse(
+                status_code=400,
+                content={"error": error_msg}
             )
-        except Exception as e:
-            logger.error(f"Unexpected error in handle_request: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+        elif "text" in node_response:
+            response_text = node_response["text"]
+        else:
+            # Try to extract text from other potential keys or use a default response
+            response_text = str(node_response)
+
+        choices = []
+        usage = UsageInfo()
+        choices.append(
+            ChatCompletionResponseChoice(
+                index=0,
+                message=ChatMessage(role="assistant", content=response_text),
+                finish_reason="stop",
+            )
+        )
+        return ChatCompletionResponse(model="chatqna", choices=choices, usage=usage)
+        
+        # try:
+        #     # Comprehensive request validation and logging
+        #     print("\n\n--- REQUEST VALIDATION ---")
+        #     print(f"Request Type: {type(request)}")
+        #     print(f"Request Attributes: {request}")
+            
+        #     # Validate request structure
+        #     if not hasattr(request, 'messages') or not request.messages:
+        #         print("ERROR: No messages found in the request")
+        #         raise HTTPException(status_code=400, detail="Messages are required")
+            
+        #     # Validate messages structure
+        #     if not isinstance(request.messages, list):
+        #         print(f"ERROR: Messages must be a list, got {type(request.messages)}")
+        #         raise HTTPException(status_code=400, detail="Messages must be a list")
+            
+        #     # Validate each message
+        #     for msg in request.messages:
+        #         if not isinstance(msg, dict):
+        #             print(f"ERROR: Invalid message format: {msg}")
+        #             raise HTTPException(status_code=400, detail="Each message must be a dictionary")
+                
+        #         if 'role' not in msg or 'content' not in msg:
+        #             print(f"ERROR: Message missing required keys: {msg}")
+        #             raise HTTPException(status_code=400, detail="Each message must have 'role' and 'content' keys")
+            
+        #     # Prepare Ollama request
+        #     ollama_request = {
+        #         "model": request.model or "llama3.2:1b",
+        #         "messages": request.messages,
+        #         "temperature": request.temperature if hasattr(request, 'temperature') else 0.7,
+        #         "stream": False
+        #     }
+            
+        #     # Optional: Add additional parameters if present
+        #     if hasattr(request, 'max_tokens') and request.max_tokens is not None:
+        #         ollama_request["max_tokens"] = request.max_tokens
+            
+        #     print("\n\n--- OLLAMA REQUEST ---")
+        #     print(ollama_request)
+            
+        #     # Schedule the request through the orchestrator
+        #     result = await self.megaservice.schedule(ollama_request)
+        #     print("\n\n--- ORCHESTRATOR RESULT ---")
+        #     print(result)
+            
+        #     # Extract the actual content from the response
+        #     if isinstance(result, tuple) and len(result) > 0:
+        #         llm_response = result[0].get('llm/MicroService')
+        #         print("\n\n--- LLM RESPONSE ---")
+        #         print(llm_response)
+                
+        #         # Handle StreamingResponse
+        #         if hasattr(llm_response, 'body_iterator'):
+        #             # Read and process the response
+        #             response_body = b""
+        #             async for chunk in llm_response.body_iterator:
+        #                 response_body += chunk
+        #             content = response_body.decode('utf-8')
+        #             print("\n\n--- DECODED CONTENT ---")
+        #             print(content)
+        #         elif hasattr(llm_response, 'body'):
+        #             # Alternative method to extract content
+        #             response_body = await llm_response.body()
+        #             content = response_body.decode('utf-8')
+        #             print("\n\n--- DECODED CONTENT (body method) ---")
+        #             print(content)
+        #         else:
+        #             content = "No response content available"
+        #             print("\n\n--- NO CONTENT FOUND ---")
+
+        #         # Construct and return the response
+        #         return ChatCompletionResponse(
+        #             id="chatcmpl-" + str(time.time()),
+        #             object="chat.completion",
+        #             created=int(time.time()),
+        #             model=request.model or "llama3.2:1b",
+        #             choices=[
+        #                 ChatCompletionResponseChoice(
+        #                     index=0,
+        #                     message=ChatMessage(
+        #                         role="assistant",
+        #                         content=content
+        #                     ),
+        #                     finish_reason="stop"
+        #                 )
+        #             ],
+        #             usage=UsageInfo(
+        #                 prompt_tokens=len(request.messages[0]['content'].split()) if request.messages else 0,
+        #                 completion_tokens=len(content.split()),
+        #                 total_tokens=len(request.messages[0]['content'].split()) + len(content.split()) if request.messages else 0
+        #             )
+        #         )
+        #     else:
+        #         raise HTTPException(status_code=500, detail="No response from LLM service")
+
+        # except HTTPException:
+        #     # Re-raise HTTP exceptions directly
+        #     raise
+        # except Exception as e:
+        #     print(f"UNEXPECTED ERROR in handle_request: {e}")
+        #     import traceback
+        #     traceback.print_exc()
+        #     raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 example = ExampleService()
 example.add_remote_service()
