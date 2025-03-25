@@ -1,0 +1,13 @@
+yt-dlp
+torch
+transformers
+openai-whisper
+pymupdf
+requests
+pytesseract
+fugashi
+spacy
+ja_ginza
+protobuf
+unidic-lite
+ipadic
