@@ -1,183 +1,125 @@
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSeq2SeqLM
-from typing import List, Dict, Any
-import yt_dlp
-import whisper
+from transformers import MarianTokenizer, MarianMTModel, BartForConditionalGeneration, BartTokenizer
+from diffusers import StableDiffusionPipeline
 import pytesseract
+import whisper
+import yt_dlp
 from PIL import Image
-import json
 import fugashi
+from typing import Dict, Any
+import json
 
 class MultimediaAgent:
     def __init__(self, 
-                 qwen_model_path: str = "Qwen/Qwen1.5-1.8B",
                  whisper_model: str = "medium",
-                 ocr_lang: str = "jpn"):
+                 ocr_lang: str = "jpn",
+                 sd_model_path: str = "stabilityai/stable-diffusion-2"):
         """
-        Initialize multimedia processing agent with multiple specialized models
-        
-        Args:
-            qwen_model_path: Path to Qwen language model
-            whisper_model: Whisper model size for transcription
-            ocr_lang: OCR language setting
+        Initialize multimedia processing agent
         """
-        # Qwen Model Setup
-        self.tokenizer = AutoTokenizer.from_pretrained(qwen_model_path)
-        self.qwen_model = AutoModelForCausalLM.from_pretrained(
-            qwen_model_path, 
-            device_map="auto",
-            torch_dtype=torch.float16
-        )
-        
+
         # Whisper Model Setup
         self.whisper_model = whisper.load_model(whisper_model)
-        
+
         # OCR Configuration
         pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
         self.ocr_lang = ocr_lang
-        
-        # Define available tools
-        self.tools = [
-            {
-                "name": "download_media",
-                "description": "Download media from URL",
-                "parameters": {
-                    "url": {"type": "string", "description": "Media URL"},
-                    "media_type": {"type": "string", "enum": ["video", "audio"]}
-                }
-            },
-            {
-                "name": "transcribe_audio",
-                "description": "Transcribe audio to text",
-                "parameters": {
-                    "audio_path": {"type": "string", "description": "Path to audio file"},
-                    "language": {"type": "string", "description": "Language of audio"}
-                }
-            },
-            {
-                "name": "ocr_extract",
-                "description": "Extract text from image or PDF",
-                "parameters": {
-                    "file_path": {"type": "string", "description": "Path to image/PDF"},
-                    "page_range": {"type": "array", "description": "Optional page range"}
-                }
-            },
-            {
-                "name": "normalize_text",
-                "description": "Normalize Japanese text",
-                "parameters": {
-                    "text": {"type": "string", "description": "Text to normalize"}
-                }
-            }
-        ]
-    
+
+        # Translation Model
+        self.translator = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+        self.translation_tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+
+        # Summarization Model Setup (BART)
+        self.summarizer = BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn")
+        self.summarizer_tokenizer = BartTokenizer.from_pretrained("facebook/bart-large-cnn")
+
+        # Stable Diffusion Setup
+        self.sd_model = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2")
+
     def download_media(self, url: str, media_type: str = "audio") -> str:
         """
-        Download media from URL using yt-dlp
-        
-        Args:
-            url: Media URL
-            media_type: Type of media to download
-        
-        Returns:
-            Path to downloaded media file
+        Download media from URL
         """
         ydl_opts = {
             'format': 'bestaudio/best' if media_type == 'audio' else 'best',
             'outtmpl': f'downloads/%(title)s.%(ext)s'
         }
-        
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             return info['requested_downloads'][0]['filepath']
-    
+
     def transcribe_audio(self, audio_path: str, language: str = "ja") -> str:
         """
         Transcribe audio using Whisper
-        
-        Args:
-            audio_path: Path to audio file
-            language: Language of audio
-        
-        Returns:
-            Transcribed text
         """
         result = self.whisper_model.transcribe(audio_path, language=language)
         return result['text']
-    
-    def ocr_extract(self, file_path: str, page_range: List[int] = None) -> str:
-        """
-        Extract text from image or PDF using OCR
-        
-        Args:
-            file_path: Path to file
-            page_range: Optional page range for multi-page documents
-        
-        Returns:
-            Extracted text
-        """
-        # Simple OCR implementation
-        try:
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image, lang=self.ocr_lang)
-            return text
-        except Exception as e:
-            return f"OCR Error: {str(e)}"
-    
+
     def normalize_text(self, text: str) -> str:
         """
         Normalize Japanese text
-
-        Args:
-            text: Input text to normalize
-
-        Returns:
-            Normalized text
         """
-        # Initialize the Tagger
         tokenizer = fugashi.Tagger()
-
-        # Split into morphemes
         morphemes = tokenizer(text)
-
-        # Extract base forms
         normalized_words = [m.feature.lemma if m.feature.lemma else m.surface for m in morphemes]
+        return ''.join(normalized_words)
 
-        # Rejoin and clean
-        normalized_text = ''.join(normalized_words)
+    def translate_to_english(self, text: str) -> str:
+        """
+        Translate Japanese to English
+        """
+        inputs = self.translation_tokenizer(text, return_tensors="pt")
+        outputs = self.translator.generate(**inputs)
+        return self.translation_tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        return normalized_text
+    def summarize_text(self, text: str) -> str:
+        """
+        Summarize the text to ensure it fits within token limits
+        """
+        inputs = self.summarizer_tokenizer(text, return_tensors="pt", max_length=1024, truncation=True)
+        summary_ids = self.summarizer.generate(**inputs, max_length=150, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
+        return self.summarizer_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
+    def generate_image(self, prompt: str, output_path: str = "output.png") -> str:
+        """
+        Generate an image using Stable Diffusion
+        """
+        # Use the Stable Diffusion pipeline to generate the image.
+        image = self.sd_model(prompt).images[0]
         
+        # Save the image to the specified output path
+        image.save(output_path)
+        
+        return output_path
+
     def process_workflow(self, url: str) -> Dict[str, Any]:
         """
         Complete multimedia processing workflow
-        
-        Args:
-            url: Source media URL
-        
-        Returns:
-            Processed multimedia data
         """
-        # Download media
         media_path = self.download_media(url)
-        
-        # Transcribe audio
         transcription = self.transcribe_audio(media_path)
-        
-        # Normalize text
         normalized_text = self.normalize_text(transcription)
-        
+
+        translated_text = self.translate_to_english(normalized_text)
+
+        # Summarize the translated text before image generation
+        summarized_text = self.summarize_text(translated_text)
+
+        image_path = self.generate_image(summarized_text)
+
         return {
             "original_url": url,
             "media_path": media_path,
             "transcription": transcription,
-            "normalized_text": normalized_text
+            "normalized_text": normalized_text,
+            "translated_text": translated_text,
+            "summarized_text": summarized_text,
+            "image_path": image_path
         }
-
 
 def main():
     agent = MultimediaAgent()
-    result = agent.process_workflow("https://www.youtube.com/watch?v=aZds4UrUuko&list=PLuNFC5RjK4NS0moKF-p1YkKJjcXU3ztvF")
+    result = agent.process_workflow("https://www.youtube.com/watch?v=aZds4UrUuko")
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":

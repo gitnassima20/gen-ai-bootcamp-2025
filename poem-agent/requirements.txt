@@ -3,11 +3,7 @@ torch
 transformers
 openai-whisper
 pymupdf
-requests
+diffusers
 pytesseract
 fugashi
-spacy
 ja_ginza
-protobuf
-unidic-lite
-ipadic
