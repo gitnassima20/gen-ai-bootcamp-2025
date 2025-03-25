@@ -11,7 +11,7 @@ import fugashi
 class MultimediaAgent:
     def __init__(self, 
                  qwen_model_path: str = "Qwen/Qwen1.5-1.8B",
-                 whisper_model: str = "base",
+                 whisper_model: str = "medium",
                  ocr_lang: str = "jpn"):
         """
         Initialize multimedia processing agent with multiple specialized models
@@ -127,33 +127,27 @@ class MultimediaAgent:
     def normalize_text(self, text: str) -> str:
         """
         Normalize Japanese text
-        
+
         Args:
             text: Input text to normalize
-        
+
         Returns:
             Normalized text
         """
-        # Basic normalization (can be expanded)
-        tokenizer = fugashi.Dictionary().create()
-    
-        # Normalize text:
-        # 1. Convert to full-width characters
-        # 2. Remove redundant whitespaces
-        # 3. Lowercase (if needed)
-        # 4. Remove repeated phrases
-        
+        # Initialize the Tagger
+        tokenizer = fugashi.Tagger()
+
         # Split into morphemes
-        morphemes = tokenizer.tokenize(text)
-        
+        morphemes = tokenizer(text)
+
         # Extract base forms
-        normalized_words = [m.dictionary_form() for m in morphemes]
-        
+        normalized_words = [m.feature.lemma if m.feature.lemma else m.surface for m in morphemes]
+
         # Rejoin and clean
         normalized_text = ''.join(normalized_words)
-        
+
         return normalized_text
-    
+        
     def process_workflow(self, url: str) -> Dict[str, Any]:
         """
         Complete multimedia processing workflow
