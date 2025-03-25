@@ -1,0 +1,9 @@
+yt-dlp
+torch
+transformers
+openai-whisper
+pymupdf
+diffusers
+pytesseract
+fugashi
+ja_ginza
