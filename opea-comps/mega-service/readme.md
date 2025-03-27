@@ -37,7 +37,7 @@ curl -X POST http://localhost:8000/v1/example-service \
     "max_tokens": 100,
     "stream": false
   }'\
-  -o output/res.wav
+  -o output/res.json
 '
 ```
 
