@@ -1,10 +1,7 @@
-from fastapi import HTTPException
+from fastapi.responses import JSONResponse, StreamingResponse
 from comps.cores.proto.api_protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
-    ChatCompletionResponseChoice,
-    ChatMessage,
-    UsageInfo
 )
 from comps.cores.proto.docarray import LLMParams
 from comps.cores.mega.utils import handle_message
@@ -13,6 +10,13 @@ from comps import MicroService, ServiceOrchestrator
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 import os
+import logging
+from io import BytesIO
+import httpx
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 TTS_SERVICE_HOST_IP = os.getenv("TTS_SERVICE_HOST_IP", "localhost")
 TTS_SERVICE_PORT = os.getenv("TTS_SERVICE_PORT", 9088)
@@ -26,13 +30,14 @@ class ExampleService:
         self.port = port
         self.endpoint = "/v1/example-service"
         self.megaservice = ServiceOrchestrator()
+        self.generate_tts_response = self.generate_tts_response.__get__(self)
 
     def add_remote_service(self):
         tts = MicroService(
            name="tts",
            host=TTS_SERVICE_HOST_IP,
            port=TTS_SERVICE_PORT,
-           endpoint="/v1/tts",
+           endpoint="/v1/audio/speech",
            use_remote_service=True,
            service_type=ServiceType.TTS,
         )
@@ -44,8 +49,8 @@ class ExampleService:
             use_remote_service=True,
             service_type=ServiceType.LLM,
         )
-        self.megaservice.add(tts).add(llm)
-        self.megaservice.flow_to(tts, llm)
+        self.megaservice.add(llm).add(tts)
+        self.megaservice.flow_to(llm, tts)
     
     def start(self):
 
@@ -63,88 +68,114 @@ class ExampleService:
 
         self.service.start()
     async def handle_request(self, request: Request):
-        data = await request.json()
-        print("data", data)
-        stream_opt = data.get("stream", False)
-        print(stream_opt)
-        chat_request = ChatCompletionRequest.model_validate(data)
-        print(chat_request)
+        try:
+            data = await request.json()
+            logger.info(f"Received request data: {data}")
 
-        # Instead of just passing the prompt text, pass the entire structured data
-        # that your microservice expects
-        prompt = handle_message(chat_request.messages)
+            stream_opt = data.get("stream", False)
+            chat_request = ChatCompletionRequest.model_validate(data)
 
-        parameters = LLMParams(
-            model=chat_request.model,
-            max_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,
-            top_k=chat_request.top_k if chat_request.top_k else 10,
-            top_p=chat_request.top_p if chat_request.top_p else 0.95,
-            temperature=chat_request.temperature if chat_request.temperature else 0.01,
-            frequency_penalty=chat_request.frequency_penalty if chat_request.frequency_penalty else 0.0,
-            presence_penalty=chat_request.presence_penalty if chat_request.presence_penalty else 0.0,
-            repetition_penalty=chat_request.repetition_penalty if chat_request.repetition_penalty else 1.03,
-            stream=stream_opt,
-            chat_template=chat_request.chat_template if chat_request.chat_template else None,
-        )
+            prompt = handle_message(chat_request.messages)
 
-        print("\n\nprompt", prompt, "\n\nparameters", parameters)
-
-        # include both the original messages and the processed prompt
-        result_dict, runtime_graph = await self.megaservice.schedule(
-            initial_inputs={
-                "text": prompt,
-                "messages": chat_request.messages
-            },
-            llm_parameters=parameters
-        )
-
-        print("\n\nresult_dict", result_dict)
-        for node, response in result_dict.items():
-            if isinstance(response, StreamingResponse):
-                return response
-
-        last_node = runtime_graph.all_leaves()[-1]
-        node_response = result_dict[last_node]
-
-        # Add proper error handling and response extraction
-        if "error" in node_response:
-            # Handle error case - either return the error or a default message
-            error_msg = node_response["error"]["message"]
-            return JSONResponse(
-                status_code=400,
-                content={"error": error_msg}
+            parameters = LLMParams(
+                model=chat_request.model,
+                max_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,
+                top_k=chat_request.top_k if chat_request.top_k else 10,
+                top_p=chat_request.top_p if chat_request.top_p else 0.95,
+                temperature=chat_request.temperature if chat_request.temperature else 0.01,
+                stream=stream_opt,
             )
-        elif "text" in node_response:
-            response_text = node_response["text"]
-        else:
-            # Try to extract text from other potential keys or use a default response
-            response_text = str(node_response)
 
-        # Send response to TTS service for audio generation
-        tts_url = f"http://{TTS_SERVICE_HOST_IP}:{TTS_SERVICE_PORT}/v1/tts"
-        tts_response = requests.post(tts_url, json={"text": response_text})
+            logger.info(f"Processing prompt: {prompt}")
 
-        if tts_response.status_code == 200:
-            # Assuming TTS service returns an audio file or URL
-            audio_data = tts_response.json()
-            return StreamingResponse(audio_data, media_type="audio/mpeg")
-        else:
+            result_dict, runtime_graph = await self.megaservice.schedule(
+                initial_inputs={
+                    "text": prompt,
+                    "messages": chat_request.messages
+                },
+                llm_parameters=parameters
+            )
+
+            # Extract response text
+            last_node = runtime_graph.all_leaves()[-1]
+            node_response = result_dict[last_node]
+            logger.info(f"Generated node response: {node_response}")
+
+            # Add proper error handling and response extraction
+            response_text = "Default response"  # Ensure a fallback value
+            if isinstance(node_response, dict) and 'detail' in node_response:
+                # Navigate through 'detail' to find 'choices'
+                details = node_response['detail']
+                if isinstance(details, list) and len(details) > 0:
+                    input_data = details[0].get('input', {})  # Get 'input' safely
+                    if isinstance(input_data, dict) and 'choices' in input_data:
+                        response_text = input_data['choices'][0]['message']['content']
+
+            logger.info(f"Generated response text: {response_text}")
+
+            # TTS Service Request
+            return await self.generate_tts_response(response_text, chat_request.model)
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             return JSONResponse(
                 status_code=500,
-                content={"error": "Failed to generate audio"}
+                content={"error": f"Internal server error: {str(e)}"}
             )
 
-        choices = []
-        usage = UsageInfo()
-        choices.append(
-            ChatCompletionResponseChoice(
-                index=0,
-                message=ChatMessage(role="assistant", content=response_text),
-                finish_reason="stop",
-            )
-        )
-        return ChatCompletionResponse(model="chatqna", choices=choices, usage=usage)
+    async def generate_tts_response(self, text: str, model: str):
+        """
+        Generate TTS response with async httpx client
+        """
+        tts_endpoint = f"http://{TTS_SERVICE_HOST_IP}:{TTS_SERVICE_PORT}/v1/audio/speech"
 
+        try:
+            logger.info(f"Attempting TTS with endpoint {tts_endpoint}")
+            
+            # Use async httpx client
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    tts_endpoint,
+                    json={"input": text},
+                    headers={"Content-Type": "application/json"}
+                )
+
+            # Check response
+            if response.status_code == 200:
+                logger.info("Successfully generated TTS audio")
+                
+                # Create a bytes buffer to ensure streaming works
+                audio_buffer = BytesIO(response.content)
+                
+                # Return streaming response
+                return StreamingResponse(
+                    audio_buffer,
+                    media_type="audio/wav",
+                    headers={
+                        "Content-Disposition": 'attachment; filename="speech_output.wav"',
+                        "Content-Length": str(len(response.content))
+                    }
+                )
+            else:
+                logger.error(f"TTS service returned status code {response.status_code}")
+                logger.error(f"Response content: {response.text}")
+                return JSONResponse(
+                    status_code=response.status_code,
+                    content={"error": f"TTS service error: {response.text}"}
+                )
+
+        except httpx.RequestError as e:
+            logger.error(f"TTS request failed: {str(e)}")
+            return JSONResponse(
+                status_code=502,
+                content={"error": f"TTS service connection error: {str(e)}"}
+            )
+        except Exception as e:
+            logger.error(f"Unexpected TTS error: {str(e)}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Could not generate speech from text"}
+            )
 example = ExampleService()
 example.add_remote_service()
 example.start()

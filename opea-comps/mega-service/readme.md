@@ -37,7 +37,7 @@ curl -X POST http://localhost:8000/v1/example-service \
     "max_tokens": 100,
     "stream": false
   }'\
-  -o output/response.json
+  -o output/res.wav
 '
 ```
 
@@ -62,4 +62,18 @@ the LLMParams were not passing the model
 parameters = LLMParams(
             model=chat_request.model,
             ...)
+```
+
+## Test the overall combination of OPEA Microservices
+
+``` sh
+curl -X POST http://localhost:8000/v1/example-service   -H "Content-Type: application/json"   -d '{
+    "messages": [{
+      "role": "user",
+      "content": "Hello, this is a test message"
+    }],
+    "model": "llama3.2:1b",
+    "temperature": 0.7,
+    "max_tokens": 100
+  }'   --create-dirs   -o output/res.wav
 ```
