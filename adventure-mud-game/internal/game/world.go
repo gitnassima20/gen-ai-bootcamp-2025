@@ -5,10 +5,11 @@ type Room struct {
 	Description string
 	Exits       map[string]string // Directions -> Room Names
 	Items       []string
+	Scene       string
 	NPCs        []string
 }
 
-var World = map[string]*Room{
+var WorldMap = map[string]*Room{
 	"forest": {
 		Name:        "Dark Forest",
 		Description: "You are in a dark forest. You hear rustling nearby.",
@@ -16,8 +17,16 @@ var World = map[string]*Room{
 			"north": "clearing",
 			"south": "cave",
 		},
-		Items: []string{"torch"},
-		NPCs:  []string{"旅人"},
+		Items: []string{"torch", "stone"},
+		NPCs:  []string{"traveler", "black cat"},
+		Scene: `
+<pre class="scene">
+🌲🌲🌲🌲🌲
+🌲  🧍  🌲
+🌲 🐾   🐱 🌲
+🌲    🔦    🌲
+🌲🌲🌲🌲🌲
+</pre>`,
 	},
 	"clearing": {
 		Name:        "Sunny Clearing",
@@ -25,7 +34,31 @@ var World = map[string]*Room{
 		Exits: map[string]string{
 			"south": "forest",
 		},
-		Items: []string{},
-		NPCs:  []string{},
+		Items: []string{"flower", "water bottle"},
+		NPCs:  []string{"girl"},
+		Scene: `
+<pre class="scene">
+🌿🌸🌞🌸🌿
+🌸     🧍    🌸
+💧   🌼   💧
+🌿🌸🌿🌸🌿
+</pre>`,
+	},
+	"cave": {
+		Name:        "Echoing Cave",
+		Description: "A cold, damp cave with echoes of dripping water. It's dimly lit.",
+		Exits: map[string]string{
+			"north": "forest",
+		},
+		Items: []string{"old scroll", "key"},
+		NPCs:  []string{"old man"},
+		Scene: `
+<pre class="scene">
+🪨🪨🪨🪨🪨
+🪨   🧓   🪨
+💧   🧻   🔑
+🪨     🕯️    🪨
+🪨🪨🪨🪨🪨
+</pre>`,
 	},
 }

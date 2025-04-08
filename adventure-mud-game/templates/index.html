@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{.Title}}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #0d0d0d;
+      color: #33ff33;
+      font-size: 1.1rem;
+    }
+
+    h1 {
+      color: #00ffcc;
+      margin-bottom: 1rem;
+    }
+
+    .console {
+      background-color: #111;
+      border: 1px solid #222;
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+      white-space: pre-wrap;
+    }
+
+    .input-line {
+      margin-top: 2rem;
+    }
+
+    input[type="text"] {
+      background-color: #000;
+      color: #33ff33;
+      border: 1px solid #33ff33;
+      padding: 0.5rem;
+      width: 100%;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+
+    ::selection {
+      background: #33ff33;
+      color: #0d0d0d;
+    }
+
+    a {
+      color: #00ffcc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .jp-word {
+      color: #ff66cc;
+    }
+
+    .scene {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .section {
+      margin-top: 1rem;
+    }
+
+    .section-title {
+      color: #66ccff;
+    }
+  </style>
+</head>
+<body>
+  <div class="console">
+    <h1>{{.Title}}</h1>
+
+    {{.Scene}}
+
+    <p><strong>{{.RoomName}}</strong>: {{.Description}}</p>
+
+    {{if .Items}}
+    <div class="section">
+      <p class="section-title">Items:</p>
+      <ul>
+        {{range .Items}}<li>{{.}}</li>{{end}}
+      </ul>
+    </div>
+    {{end}}
+
+    {{if .NPCs}}
+    <div class="section">
+      <p class="section-title">You see:</p>
+      <ul>
+        {{range .NPCs}}<li>{{.}}</li>{{end}}
+      </ul>
+    </div>
+    {{end}}
+
+    <div class="input-line">
+      <form action="/command" method="POST">
+        <label for="command">> </label>
+        <input type="text" id="command" name="command" autocomplete="off" autofocus>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
