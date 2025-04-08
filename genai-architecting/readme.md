@@ -10,7 +10,6 @@ The company wants to own its infrastructure to control costs and ensure data pri
 
 *Cloud Consideration*: Future adoption of cloud for deployment and performance scaling.
 
-
 ## 2. Assumptions
 
 - We are assuming that the Open-source LLMs that we choose will be powerful enough to run on hardware with an investment of 10-15K.
@@ -18,7 +17,6 @@ The company wants to own its infrastructure to control costs and ensure data pri
 - We're just going to hook up a single server in our office to the internet and we should have enough bandwidth to serve the 300 students.
 
 - We excpect that our infrastructure should handle latency applications without immediate cloud dependency.
-
 
 ## 3. Data Strategy
 
@@ -30,37 +28,33 @@ The company wants to own its infrastructure to control costs and ensure data pri
 
 *Inference Optimization*: Consider vector databases for efficient model querying.
 
-
 ## 4. Model Selection
 
-*Primary Choice*: IBM Granite (Open-source with transparent training data: https://huggingface.co/ibm-granite).
-
+*Primary Choice*: IBM Granite (Open-source with transparent training data: <https://huggingface.co/ibm-granite>).
 
 ## 5. Deployment & Maintenance Plan
 
-+ Initial Setup:
+- Initial Setup:
 
-    - Install AI PC with necessary dependencies.
+  - Install AI PC with necessary dependencies.
 
-    - Deploy IBM Granite LLM.
+  - Deploy IBM Granite LLM.
 
-+ Monitoring:
+- Monitoring:
 
-    - Implement logging for performance tracking.
+  - Implement logging for performance tracking.
 
-    - Set up alerts for hardware resource usage.
+  - Set up alerts for hardware resource usage.
 
-+ Backup & Recovery:
+- Backup & Recovery:
 
-    - Automate backups.
+  - Automate backups.
 
-+ Security Measures:
+- Security Measures:
 
-    - Implement encryption for sensitive data.
+  - Implement encryption for sensitive data.
 
-+ Cost Optimization:
+- Cost Optimization:
+  - Use power-efficient hardware to minimize electricity costs.
 
-    - Use power-efficient hardware to minimize electricity costs.
-
-    - Optimize batch processing to reduce computational load.
-
+  - Optimize batch processing to reduce computational load.

@@ -70,7 +70,7 @@ parameters = LLMParams(
 curl -X POST http://localhost:8000/v1/example-service   -H "Content-Type: application/json"   -d '{
     "messages": [{
       "role": "user",
-      "content": "Hello, this is a test message"
+      "content": "What is the capital of Morocco?"
     }],
     "model": "llama3.2:1b",
     "temperature": 0.7,
