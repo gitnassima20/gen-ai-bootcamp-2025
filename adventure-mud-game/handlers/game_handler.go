@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"text-adventure-mud/internal/game"
+	"adventure-mud-game/internal/game"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App) {
+func RegisterRoutes(app *fiber.App) {
 	app.Get("/look", func(c *fiber.Ctx) error {
 		return c.SendString(game.Look())
 	})
