@@ -1,13 +1,11 @@
 package main
 
 import (
-	"adventure-mud-game/config"
+	"adventure-mud-game/handlers"
 	"adventure-mud-game/internal/game"
-	"adventure-mud-game/services"
 	"fmt"
 	"html/template"
 
-	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 )
@@ -19,23 +17,7 @@ func main() {
 	})
 
 	fmt.Println("Server running on http://localhost:3000")
-	// handlers.RegisterRoutes(app)
-	// Load AWS configuration
-	cfg := config.LoadAWSConfig()
-
-	// Create Bedrock runtime client
-	client := bedrockruntime.NewFromConfig(cfg)
-
-	// Create Bedrock service
-	bedrock := services.NewBedrockService(client, "amazon.nova-lite-v1:0")
-
-	// Invoke the Bedrock service
-	response, err := bedrock.Invoke("Explain how to play a Mud game")
-	if err != nil {
-		fmt.Println("Error invoking Bedrock:", err)
-	} else {
-		fmt.Println("Bedrock response:", response)
-	}
+	handlers.RegisterRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		startRoom := game.WorldMap["forest"]

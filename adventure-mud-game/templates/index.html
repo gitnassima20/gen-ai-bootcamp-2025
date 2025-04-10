@@ -11,20 +11,70 @@
       background-color: #0d0d0d;
       color: #33ff33;
       font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #111;
+      border: 2px solid #222;
+      padding: 1.5rem;
+      box-shadow: 0 0 15px rgba(51, 255, 51, 0.2);
     }
 
     h1 {
       color: #00ffcc;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid #00ffcc;
+      padding-bottom: 0.5rem;
     }
 
-    .console {
-      background-color: #111;
-      border: 1px solid #222;
+    .scene {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #66ccff;
+    }
+
+    .room-info {
+      background-color: #1a1a1a;
       padding: 1rem;
-      max-width: 800px;
-      margin: auto;
-      white-space: pre-wrap;
+      border-left: 4px solid #33ff33;
+      margin-bottom: 1.5rem;
+    }
+
+    .section {
+      margin-top: 1.5rem;
+      background-color: #1a1a1a;
+      padding: 1rem;
+      border-left: 4px solid #ff66cc;
+    }
+
+    .section-title {
+      color: #66ccff;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 0.3rem;
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    li::before {
+      content: '▶';
+      color: #33ff33;
+      position: absolute;
+      left: 0;
+      margin-right: 0.5rem;
     }
 
     .input-line {
@@ -40,46 +90,17 @@
       font-family: inherit;
       font-size: 1rem;
     }
-
-    ::selection {
-      background: #33ff33;
-      color: #0d0d0d;
-    }
-
-    a {
-      color: #00ffcc;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .jp-word {
-      color: #ff66cc;
-    }
-
-    .scene {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    .section {
-      margin-top: 1rem;
-    }
-
-    .section-title {
-      color: #66ccff;
-    }
   </style>
 </head>
 <body>
-  <div class="console">
+  <div class="container">
     <h1>{{.Title}}</h1>
 
-    {{.Scene}}
+    <div class="scene">{{.Scene}}</div>
 
-    <p><strong>{{.RoomName}}</strong>: {{.Description}}</p>
+    <div class="room-info">
+      <strong>{{.RoomName}}</strong>: {{.Description}}
+    </div>
 
     {{if .Items}}
     <div class="section">
@@ -100,11 +121,33 @@
     {{end}}
 
     <div class="input-line">
-      <form action="/command" method="POST">
-        <label for="command">> </label>
-        <input type="text" id="command" name="command" autocomplete="off" autofocus>
-      </form>
+      <input type="text" id="command-input" placeholder="Enter your command..." />
+      <div id="response-area"></div>
     </div>
   </div>
+
+  <script>
+    document.getElementById('command-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const command = this.value;
+        fetch('/command', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ command: command })
+        })
+        .then(response => response.text())
+        .then(data => {
+          const responseArea = document.getElementById('response-area');
+          responseArea.textContent = data;
+          this.value = ''; // Clear input after sending
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      }
+    });
+  </script>
 </body>
 </html>

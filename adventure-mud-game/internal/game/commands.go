@@ -16,7 +16,7 @@ func HandleCommand(command string) string {
 	case "持ち物": // "Inventory" in Japanese
 		return "Your inventory contains: torch, flower."
 	case "話す": // "Talk" in Japanese
-		return "You talk to the NPC. They seem friendly."
+		return TalkToNPC()
 	default:
 		return "Unknown command. Type '助けて' for a list of commands." // "Unknown command" in English
 	}

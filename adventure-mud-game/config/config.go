@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -17,7 +18,7 @@ type AWSConfig struct {
 	Region    string
 }
 
-func LoadAWSConfig() aws.Config {
+func LoadAWSConfig() (aws.Config, error) {
 	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
@@ -31,7 +32,7 @@ func LoadAWSConfig() aws.Config {
 
 	// Validate required fields
 	if accessKey == "" || secretKey == "" || region == "" {
-		log.Fatal("Missing required AWS configuration")
+		return aws.Config{}, fmt.Errorf("missing required AWS configuration: access key, secret key, or region is empty")
 	}
 
 	// Create AWS configuration
@@ -42,8 +43,8 @@ func LoadAWSConfig() aws.Config {
 		),
 	)
 	if err != nil {
-		log.Fatalf("Unable to load AWS SDK config: %v", err)
+		return aws.Config{}, fmt.Errorf("unable to load AWS SDK config: %v", err)
 	}
 
-	return cfg
+	return cfg, nil
 }

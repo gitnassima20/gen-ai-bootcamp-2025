@@ -7,12 +7,19 @@ import (
 )
 
 func RegisterRoutes(app *fiber.App) {
-	app.Get("/look", func(c *fiber.Ctx) error {
-		return c.SendString(game.Look())
-	})
+	app.Post("/command", func(c *fiber.Ctx) error {
+		type CommandRequest struct {
+			Command string `json:"command"`
+		}
 
-	app.Get("/move/:direction", func(c *fiber.Ctx) error {
-		direction := c.Params("direction")
-		return c.SendString(game.Move(direction))
+		var req CommandRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid request")
+		}
+
+		// Use HandleCommand to process all game commands
+		response := game.HandleCommand(req.Command)
+
+		return c.SendString(response)
 	})
 }
