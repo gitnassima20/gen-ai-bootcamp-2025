@@ -8,7 +8,6 @@
 
 **Language Learning**: Each response includes one Japanese vocabulary word
 
-**AI Integration**: NPC dialogues are powered by llm
 
 ## Technical Requirements
 
@@ -23,4 +22,11 @@ for later
 
 ## API Endpoints
 
-## Environment Setup
+## AI Features
+
+- [x] NPC Dialogues: Powered by AWS Bedrock (nova-light)
+- [ ] AI Room Lore Expansion: When using Look command
+- [ ] AI Puzzle Hints
+- [ ] Background Audio Matching based On Room
+- [ ] Character Builder
+- [ ] Guardrails for responses(NPC stays in character, Prevent NSFW, religious, or political references, Limit Hints... )
