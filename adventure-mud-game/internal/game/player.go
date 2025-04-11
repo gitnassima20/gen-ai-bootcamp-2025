@@ -6,6 +6,6 @@ type Player struct {
 }
 
 var CurrentPlayer = &Player{
-	Location:  "forest",
+	Location:  "entrance",
 	Inventory: []string{},
 }

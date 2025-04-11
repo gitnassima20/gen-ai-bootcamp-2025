@@ -11,9 +11,6 @@ import (
 )
 
 func TalkToNPC() string {
-	// Detailed logging for debugging
-	log.Println("TalkToNPC: Starting NPC interaction")
-	log.Printf("Current Player Location: %s", CurrentPlayer.Location)
 
 	// Check if there are NPCs in the current room
 	currentRoom, exists := WorldMap[CurrentPlayer.Location]

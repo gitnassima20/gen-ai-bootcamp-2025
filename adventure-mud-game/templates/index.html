@@ -1,58 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>{{.Title}}</title>
   <style>
+    :root {
+      /* Scene-specific color palettes */
+      --entrance-bg: #2c3e50;
+      --entrance-text: #ecf0f1;
+      --entrance-accent: #3498db;
+
+      --forest-bg: #1d2d3a;
+      --forest-text: #a9d6e5;
+      --forest-accent: #457b9d;
+
+      --clearing-bg: #f0f4f8;
+      --clearing-text: #2c3e50;
+      --clearing-accent: #27ae60;
+
+      --cave-bg: #1f1f1f;
+      --cave-text: #e0e0e0;
+      --cave-accent: #8e44ad;
+
+      /* Default theme variables */
+      --bg-color: var(--entrance-bg);
+      --text-color: var(--entrance-text);
+      --accent-color: var(--entrance-accent);
+    }
+
     body {
       margin: 0;
-      padding: 2rem;
+      padding: 0.25rem;
       font-family: 'Courier New', Courier, monospace;
-      background-color: #0d0d0d;
-      color: #33ff33;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-size: 1.1rem;
-      line-height: 1.6;
+      line-height: 1.3;
+      transition: background-color 0.5s, color 0.5s;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 1200px;
+      width: 90%;
       margin: 0 auto;
-      background-color: #111;
-      border: 2px solid #222;
-      padding: 1.5rem;
-      box-shadow: 0 0 15px rgba(51, 255, 51, 0.2);
+      background-color: color-mix(in srgb, var(--bg-color) 90%, white 10%);
+      border: 2px solid color-mix(in srgb, var(--accent-color) 50%, transparent 50%);
+      padding: 0.5rem;
+      box-shadow: 0 0 15px color-mix(in srgb, var(--accent-color) 30%, transparent 70%);
     }
 
     h1 {
-      color: #00ffcc;
-      margin-bottom: 1.5rem;
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
       text-align: center;
-      border-bottom: 1px solid #00ffcc;
-      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--accent-color);
+      padding-bottom: 0.15rem;
     }
 
     .scene {
       font-size: 1.2rem;
-      margin-bottom: 1.5rem;
-      color: #66ccff;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 0;
+      overflow: hidden; /* Prevent any overflow */
+    }
+
+    .scene-image {
+      object-fit: contain;
+      object-position: center;
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 20%, transparent 80%);
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .scene-image {
+        max-height: 300px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1200px) {
+      .scene-image {
+        max-height: 450px;
+      }
+    }
+
+    @media (min-width: 1201px) {
+      .scene-image {
+        max-height: 600px;
+      }
     }
 
     .room-info {
-      background-color: #1a1a1a;
-      padding: 1rem;
-      border-left: 4px solid #33ff33;
-      margin-bottom: 1.5rem;
+      background-color: color-mix(in srgb, var(--bg-color) 80%, white 20%);
+      padding: 0.35rem;
+      margin-bottom: 0.35rem;
+      border-left: 3px solid var(--accent-color);
     }
 
     .section {
-      margin-top: 1.5rem;
-      background-color: #1a1a1a;
-      padding: 1rem;
-      border-left: 4px solid #ff66cc;
+      margin-top: 0.5rem;
+      background-color: color-mix(in srgb, var(--bg-color) 80%, white 20%);
+      padding: 0.35rem;
+      border-left: 3px solid var(--accent-color);
     }
 
     .section-title {
-      color: #66ccff;
+      color: var(--accent-color);
       margin-bottom: 0.5rem;
       font-weight: bold;
     }
@@ -67,31 +127,34 @@
       margin-bottom: 0.3rem;
       padding-left: 1rem;
       position: relative;
+      color: var(--text-color);
     }
 
     li::before {
       content: '▶';
-      color: #33ff33;
+      color: var(--accent-color);
       position: absolute;
       left: 0;
       margin-right: 0.5rem;
     }
 
     .input-line {
-      margin-top: 2rem;
+      margin-top: 0.5rem;
     }
 
     input[type="text"] {
-      background-color: #000;
-      color: #33ff33;
-      border: 1px solid #33ff33;
-      padding: 0.5rem;
+      background-color: color-mix(in srgb, var(--bg-color) 90%, white 10%);
+      color: var(--text-color);
+      border: 1px solid var(--accent-color);
+      padding: 0.35rem;
       width: 100%;
       font-family: inherit;
       font-size: 1rem;
+      margin-bottom: 0.35rem;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>{{.Title}}</h1>
@@ -127,7 +190,35 @@
   </div>
 
   <script>
-    document.getElementById('command-input').addEventListener('keypress', function(e) {
+    // Dynamic scene color adaptation
+    function updateColorScheme(scene) {
+      const root = document.documentElement;
+      switch (scene) {
+        case 'entrance':
+          root.style.setProperty('--bg-color', 'var(--entrance-bg)');
+          root.style.setProperty('--text-color', 'var(--entrance-text)');
+          root.style.setProperty('--accent-color', 'var(--entrance-accent)');
+          break;
+        case 'forest':
+          root.style.setProperty('--bg-color', 'var(--forest-bg)');
+          root.style.setProperty('--text-color', 'var(--forest-text)');
+          root.style.setProperty('--accent-color', 'var(--forest-accent)');
+          break;
+        case 'clearing':
+          root.style.setProperty('--bg-color', 'var(--clearing-bg)');
+          root.style.setProperty('--text-color', 'var(--clearing-text)');
+          root.style.setProperty('--accent-color', 'var(--clearing-accent)');
+          break;
+        case 'cave':
+          root.style.setProperty('--bg-color', 'var(--cave-bg)');
+          root.style.setProperty('--text-color', 'var(--cave-text)');
+          root.style.setProperty('--accent-color', 'var(--cave-accent)');
+          break;
+      }
+    }
+
+    // Attach color scheme update to command response
+    document.getElementById('command-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         const command = this.value;
         fetch('/command', {
@@ -137,17 +228,18 @@
           },
           body: JSON.stringify({ command: command })
         })
-        .then(response => response.text())
-        .then(data => {
-          const responseArea = document.getElementById('response-area');
-          responseArea.textContent = data;
-          this.value = ''; // Clear input after sending
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+          .then(response => response.text())
+          .then(data => {
+            const responseArea = document.getElementById('response-area');
+            responseArea.textContent = data;
+            this.value = ''; // Clear input after sending
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
       }
     });
   </script>
 </body>
+
 </html>

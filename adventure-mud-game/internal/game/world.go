@@ -10,6 +10,16 @@ type Room struct {
 }
 
 var WorldMap = map[string]*Room{
+	"entrance": {
+		Name:        "Entrance",
+		Description: "You are at the entrance of the Isekai World",
+		Exits: map[string]string{
+			"north": "forest",
+		},
+		Items: []string{"door"},
+		NPCs:  []string{},
+		Scene: `<img src="/templates/img/entrance.jpg" alt="Entrance" class="scene-image">`,
+	},
 	"forest": {
 		Name:        "Dark Forest",
 		Description: "You are in a dark forest. You hear rustling nearby.",
@@ -17,16 +27,9 @@ var WorldMap = map[string]*Room{
 			"north": "clearing",
 			"south": "cave",
 		},
-		Items: []string{"torch", "stone"},
+		Items: []string{"torch"},
 		NPCs:  []string{"traveler", "black cat"},
-		Scene: `
-<pre class="scene">
-🌲🌲🌲🌲🌲
-🌲  🧍  🌲
-🌲 🐾   🐱 🌲
-🌲    🔦    🌲
-🌲🌲🌲🌲🌲
-</pre>`,
+		Scene: `<img src="/templates/img/forest.jpg" alt="Dark Forest" class="scene-image">`,
 	},
 	"clearing": {
 		Name:        "Sunny Clearing",
@@ -35,14 +38,8 @@ var WorldMap = map[string]*Room{
 			"south": "forest",
 		},
 		Items: []string{"flower", "water bottle"},
-		NPCs:  []string{"girl"},
-		Scene: `
-<pre class="scene">
-🌿🌸🌞🌸🌿
-🌸     🧍    🌸
-💧   🌼   💧
-🌿🌸🌿🌸🌿
-</pre>`,
+		NPCs:  []string{"wolf"},
+		Scene: `<img src="/templates/img/clearing.jpg" alt="Sunny Clearing" class="scene-image">`,
 	},
 	"cave": {
 		Name:        "Echoing Cave",
@@ -50,15 +47,8 @@ var WorldMap = map[string]*Room{
 		Exits: map[string]string{
 			"north": "forest",
 		},
-		Items: []string{"old scroll", "key"},
-		NPCs:  []string{"old man"},
-		Scene: `
-<pre class="scene">
-🪨🪨🪨🪨🪨
-🪨   🧓   🪨
-💧   🧻   🔑
-🪨     🕯️    🪨
-🪨🪨🪨🪨🪨
-</pre>`,
+		Items: []string{"sword", "key"},
+		NPCs:  []string{"old woman"},
+		Scene: `<img src="/templates/img/cave.jpg" alt="Echoing Cave" class="scene-image">`,
 	},
 }

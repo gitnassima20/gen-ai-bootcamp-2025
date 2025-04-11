@@ -16,11 +16,14 @@ func main() {
 		Views: engine,
 	})
 
+	// Serve static files from templates directory
+	app.Static("/img", "./templates/img")
+
 	fmt.Println("Server running on http://localhost:3000")
 	handlers.RegisterRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		startRoom := game.WorldMap["forest"]
+		startRoom := game.WorldMap["entrance"]
 
 		return c.Render("index", fiber.Map{
 			"Title":       "Welcome the Mud Game",
