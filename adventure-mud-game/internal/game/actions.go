@@ -78,3 +78,25 @@ func generateDialogue(prompt string) (string, error) {
 
 	return response, nil
 }
+
+func Move(direction string) string {
+	// Get current room
+	currentRoom, exists := WorldMap[CurrentPlayer.Location]
+	if !exists {
+		return "Current room not found"
+	}
+
+	// Check if the direction is a valid exit
+	nextRoomName, canMove := currentRoom.Exits[direction]
+	if !canMove {
+		return fmt.Sprintf("Cannot move to %s", direction)
+	}
+
+	// Update player's location
+	CurrentPlayer.Location = nextRoomName
+
+	// Get the new room details
+	newRoom, _ := WorldMap[nextRoomName]
+
+	return fmt.Sprintf("%sに移動しました。\n%s", nextRoomName, newRoom.Description)
+}

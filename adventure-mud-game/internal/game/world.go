@@ -18,7 +18,7 @@ var WorldMap = map[string]*Room{
 		},
 		Items: []string{"door"},
 		NPCs:  []string{},
-		Scene: `<img src="/templates/img/entrance.jpg" alt="Entrance" class="scene-image">`,
+		Scene: `<img src="img/entrance.jpg" alt="Entrance" class="scene-image">`,
 	},
 	"forest": {
 		Name:        "Dark Forest",
@@ -29,7 +29,7 @@ var WorldMap = map[string]*Room{
 		},
 		Items: []string{"torch"},
 		NPCs:  []string{"traveler", "black cat"},
-		Scene: `<img src="/templates/img/forest.jpg" alt="Dark Forest" class="scene-image">`,
+		Scene: `<img src="img/forest.jpg" alt="Dark Forest" class="scene-image">`,
 	},
 	"clearing": {
 		Name:        "Sunny Clearing",
@@ -39,7 +39,7 @@ var WorldMap = map[string]*Room{
 		},
 		Items: []string{"flower", "water bottle"},
 		NPCs:  []string{"wolf"},
-		Scene: `<img src="/templates/img/clearing.jpg" alt="Sunny Clearing" class="scene-image">`,
+		Scene: `<img src="img/clearing.jpg" alt="Sunny Clearing" class="scene-image">`,
 	},
 	"cave": {
 		Name:        "Echoing Cave",
@@ -49,6 +49,6 @@ var WorldMap = map[string]*Room{
 		},
 		Items: []string{"sword", "key"},
 		NPCs:  []string{"old woman"},
-		Scene: `<img src="/templates/img/cave.jpg" alt="Echoing Cave" class="scene-image">`,
+		Scene: `<img src="img/cave.jpg" alt="Echoing Cave" class="scene-image">`,
 	},
 }

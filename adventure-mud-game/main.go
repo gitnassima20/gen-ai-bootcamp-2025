@@ -5,6 +5,7 @@ import (
 	"adventure-mud-game/internal/game"
 	"fmt"
 	"html/template"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
@@ -23,7 +24,8 @@ func main() {
 	handlers.RegisterRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		startRoom := game.WorldMap["entrance"]
+		// Set the initial player location
+		startRoom := game.WorldMap[game.CurrentPlayer.Location]
 
 		return c.Render("index", fiber.Map{
 			"Title":       "Welcome the Mud Game",
@@ -43,9 +45,23 @@ func main() {
 		// Call the command handler to process the input
 		response := game.HandleCommand(command)
 
+		// Get the current room after command processing
+		currentRoom := game.WorldMap[game.CurrentPlayer.Location]
+		fmt.Println("CurrentRoom", currentRoom)
+
+		// Determine the scene name for color scheme
+		sceneName := strings.ToLower(strings.ReplaceAll(currentRoom.Name, " ", ""))
+
+		// Render the entire page with updated room details
 		return c.Render("index", fiber.Map{
-			"Title":   "The Forgotten Shrine",
-			"Message": response,
+			"Title":       "Into the " + currentRoom.Name,
+			"Message":     response,
+			"Scene":       template.HTML(currentRoom.Scene),
+			"SceneName":   sceneName,
+			"RoomName":    currentRoom.Name,
+			"Description": currentRoom.Description,
+			"Items":       currentRoom.Items,
+			"NPCs":        currentRoom.NPCs,
 		})
 	})
 

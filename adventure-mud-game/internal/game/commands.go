@@ -4,12 +4,40 @@ import (
 	"strings"
 )
 
+var CurrentRoom = WorldMap["entrance"]
+
+var directionMap = map[string]string{
+	"↑": "north",
+	"↓": "south",
+	"→": "east",
+	"←": "west",
+}
+
 func HandleCommand(command string) string {
 	// Normalize the command
-	command = strings.ToLower(strings.TrimSpace(command))
+	command = strings.TrimSpace(command)
+
+	// Check if the command is a movement command
+	if direction, ok := directionMap[command]; ok {
+		return Move(direction)
+	}
+
+	// move case
+	if strings.HasPrefix(command, "移動") {
+		parts := strings.Fields(command)
+		if len(parts) == 2 {
+			directionSymbol := parts[1]
+			direction, ok := directionMap[directionSymbol]
+			if !ok {
+				return "Direction not available"
+			}
+			return Move(direction)
+		}
+		return "Use arrows to move"
+	}
 
 	switch command {
-	case "助けて": // "Help" in Japanese
+	case "助けて": // "Help"
 		return getHelp()
 	case "見る": // "Look" in Japanese
 		return "You look around. The world is a mixture of light and dark."
@@ -18,7 +46,7 @@ func HandleCommand(command string) string {
 	case "話す": // "Talk" in Japanese
 		return TalkToNPC()
 	default:
-		return "Unknown command. Type '助けて' for a list of commands." // "Unknown command" in English
+		return "Unknow command"
 	}
 }
 
@@ -31,5 +59,6 @@ Available commands:
 - 話す: Talk to an NPC
 - 使用 [item]: Use an item
 - 取る [item]: Pick up an item
+- 移動 [direction]: Move in a direction
 `
 }

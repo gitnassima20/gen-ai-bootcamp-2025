@@ -199,44 +199,69 @@
           root.style.setProperty('--text-color', 'var(--entrance-text)');
           root.style.setProperty('--accent-color', 'var(--entrance-accent)');
           break;
-        case 'forest':
+        case 'darkforest':
           root.style.setProperty('--bg-color', 'var(--forest-bg)');
           root.style.setProperty('--text-color', 'var(--forest-text)');
           root.style.setProperty('--accent-color', 'var(--forest-accent)');
           break;
-        case 'clearing':
+        case 'sunnyclearing':
           root.style.setProperty('--bg-color', 'var(--clearing-bg)');
           root.style.setProperty('--text-color', 'var(--clearing-text)');
           root.style.setProperty('--accent-color', 'var(--clearing-accent)');
           break;
-        case 'cave':
+        case 'echoingcave':
           root.style.setProperty('--bg-color', 'var(--cave-bg)');
           root.style.setProperty('--text-color', 'var(--cave-text)');
           root.style.setProperty('--accent-color', 'var(--cave-accent)');
           break;
+        default:
+          // Reset to default
+          root.style.setProperty('--bg-color', 'var(--entrance-bg)');
+          root.style.setProperty('--text-color', 'var(--entrance-text)');
+          root.style.setProperty('--accent-color', 'var(--entrance-accent)');
       }
     }
+
+    // Initial color scheme setup
+    document.addEventListener('DOMContentLoaded', function() {
+      const initialScene = "{{.SceneName}}";
+      updateColorScheme(initialScene);
+    });
 
     // Attach color scheme update to command response
     document.getElementById('command-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         const command = this.value;
+        
         fetch('/command', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: JSON.stringify({ command: command })
+          body: `command=${encodeURIComponent(command)}`
         })
-          .then(response => response.text())
-          .then(data => {
+        .then(response => response.text())
+        .then(responseText => {
+          // Check if the response indicates a movement command
+          const movementKeywords = ['移動', '↑', '↓', '→', '←'];
+          const isMovementCommand = movementKeywords.some(keyword => 
+            responseText.includes(keyword)
+          );
+
+          if (isMovementCommand) {
+            // Reload the page for movement commands
+            window.location.reload();
+          } else {
+            // Update response area for other commands
             const responseArea = document.getElementById('response-area');
-            responseArea.textContent = data;
-            this.value = ''; // Clear input after sending
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
+            responseArea.textContent = responseText;
+            this.value = ''; // Clear input
+          }
+        })
+        .catch(error => {
+          console.error('Fetch Error:', error);
+          alert('Network error. Please check your connection and try again.');
+        });
       }
     });
   </script>
