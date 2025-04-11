@@ -15,6 +15,7 @@
 - AI/NPCs: AWS Bedrock (nova-light) maybe
 - Frontend: Minimal Go Templates + HTMX
 - State Management: In-Memory (Go Maps)
+- Add the 2D to enable interaction with screen
 
 ## Database Schema
 
