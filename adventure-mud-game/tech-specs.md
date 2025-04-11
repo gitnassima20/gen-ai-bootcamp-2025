@@ -30,4 +30,6 @@ for later
 - [ ] AI Puzzle Hints
 - [ ] Background Audio Matching based On Room
 - [ ] Character Builder
+- [ ] Vocab Quest (example:
+🌸 Quest: Find three items whose names include the kanji for "light" (光))
 - [ ] Guardrails for responses(NPC stays in character, Prevent NSFW, religious, or political references, Limit Hints... )
