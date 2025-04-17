@@ -21,6 +21,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.18 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/ebitengine/purego v0.8.2 // indirect
+	github.com/gen2brain/raylib-go/raylib v0.0.0-20250409052854-a4292f0f0412 // indirect
 	github.com/gofiber/template v1.8.3 // indirect
 	github.com/gofiber/template/html/v2 v2.1.3 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
@@ -34,5 +36,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )
