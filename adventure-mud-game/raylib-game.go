@@ -18,6 +18,11 @@ var (
 	playerDest   rl.Rectangle
 
 	playerSpeed float32 = 3
+
+	bkgSoundPaused bool
+	bkgSound       rl.Music
+
+	cam rl.Camera2D
 )
 
 func drawScene() {
@@ -27,11 +32,11 @@ func drawScene() {
 
 func input() {
 	if rl.IsKeyDown(rl.KeyW) || rl.IsKeyDown(rl.KeyUp) {
-		playerDest.Y -= playerSpeed
+		playerDest.Y += playerSpeed
 	}
 
 	if rl.IsKeyDown(rl.KeyS) || rl.IsKeyDown(rl.KeyDown) {
-		playerDest.Y += playerSpeed
+		playerDest.Y -= playerSpeed
 	}
 
 	if rl.IsKeyDown(rl.KeyA) || rl.IsKeyDown(rl.KeyLeft) {
@@ -41,19 +46,34 @@ func input() {
 	if rl.IsKeyDown(rl.KeyD) || rl.IsKeyDown(rl.KeyRight) {
 		playerDest.X += playerSpeed
 	}
+
+	if rl.IsKeyPressed(rl.KeyQ) {
+		bkgSoundPaused = !bkgSoundPaused
+	}
 }
 
 func update() {
 	running = !rl.WindowShouldClose()
+
+	rl.UpdateMusicStream(bkgSound)
+
+	if bkgSoundPaused {
+		rl.PauseMusicStream(bkgSound)
+	} else {
+		rl.ResumeMusicStream(bkgSound)
+	}
+
+	cam.Target = rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2))
 }
 
 func render() {
 	rl.BeginDrawing()
-
 	rl.ClearBackground(bkgColor)
+	rl.BeginMode2D(cam)
 
 	drawScene()
 
+	rl.EndMode2D()
 	rl.EndDrawing()
 }
 
@@ -67,12 +87,22 @@ func init() {
 
 	playerSrc = rl.NewRectangle(0, 0, 48, 48)
 	playerDest = rl.NewRectangle(200, 200, 100, 100)
+
+	rl.InitAudioDevice()
+	bkgSound = rl.LoadMusicStream("./res/bkg-sound.mp3")
+	bkgSoundPaused = false
+	rl.PlayMusicStream(bkgSound)
+
+	cam = rl.NewCamera2D(rl.NewVector2(float32(screenWidth/2), float32(screenHeight/2)),
+		rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2)), 0.0, 1.0)
 }
 
 func quit() {
-	rl.CloseWindow()
 	rl.UnloadTexture(grasseSprite)
 	rl.UnloadTexture(playerSprite)
+	rl.UnloadMusicStream(bkgSound)
+	rl.CloseAudioDevice()
+	rl.CloseWindow()
 }
 
 func main() {
