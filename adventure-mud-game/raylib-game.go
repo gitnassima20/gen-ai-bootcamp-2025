@@ -74,6 +74,8 @@ func input() {
 func update() {
 	running = !rl.WindowShouldClose()
 
+	playerSrc.X = 0
+
 	if playerMoving {
 		if playerUp {
 			playerDest.Y -= playerSpeed
@@ -90,6 +92,7 @@ func update() {
 		if frameCount%8 == 1 {
 			playerFrame++
 		}
+		playerSrc.X = playerSrc.Width * float32(playerFrame)
 	}
 
 	frameCount++
@@ -97,7 +100,6 @@ func update() {
 		playerFrame = 0
 	}
 
-	playerSrc.X = playerSrc.Width * float32(playerFrame)
 	playerSrc.Y = playerSrc.Height * float32(playerDir)
 
 	rl.UpdateMusicStream(bkgSound)
@@ -142,7 +144,7 @@ func init() {
 	rl.PlayMusicStream(bkgSound)
 
 	cam = rl.NewCamera2D(rl.NewVector2(float32(screenWidth/2), float32(screenHeight/2)),
-		rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2)), 0.0, 1.0)
+		rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2)), 0.0, 2.0)
 }
 
 func quit() {
