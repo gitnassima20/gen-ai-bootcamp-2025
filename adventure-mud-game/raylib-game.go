@@ -15,26 +15,26 @@ var (
 	grasseSprite rl.Texture2D
 	playerSprite rl.Texture2D
 
-	playerSrc                                     rl.Rectangle
-	playerDest                                    rl.Rectangle
+	playerSrc                                     rl.Rectangle // a rectangle defining which part of the player sprit sheet to draw
+	playerDest                                    rl.Rectangle // a rectangle defining where and how big to draw the player on the screen
 	playerMoving                                  bool
-	playerDir                                     int
+	playerDir                                     int // representing the direction the player is facing
 	playerUp, playerDown, playerRight, playerLeft bool
-	playerFrame                                   int
+	playerFrame                                   int // which animation frame of the player to show
 
-	frameCount int
+	frameCount int // to control animation speed
 
 	playerSpeed float32 = 3
 
 	bkgSoundPaused bool
 	bkgSound       rl.Music
 
-	cam rl.Camera2D
+	cam rl.Camera2D // camera to follow the player
 )
 
 func drawScene() {
-	rl.DrawTexture(grasseSprite, 100, 50, rl.White)
-	rl.DrawTexturePro(playerSprite, playerSrc, playerDest, rl.NewVector2(playerDest.Width, playerDest.Height), 0, rl.White)
+	rl.DrawTexture(grasseSprite, 100, 50, rl.White)                                                                         // for static images only
+	rl.DrawTexturePro(playerSprite, playerSrc, playerDest, rl.NewVector2(playerDest.Width, playerDest.Height), 0, rl.White) // for animation, rotation, scaling..
 }
 
 func input() {
@@ -74,7 +74,7 @@ func input() {
 func update() {
 	running = !rl.WindowShouldClose()
 
-	playerSrc.X = 0
+	playerSrc.X = playerSrc.Width * float32(playerFrame)
 
 	if playerMoving {
 		if playerUp {
@@ -89,10 +89,11 @@ func update() {
 		if playerRight {
 			playerDest.X += playerSpeed
 		}
-		if frameCount%8 == 1 {
+		if frameCount % 8 == 1 {
 			playerFrame++
 		}
-		playerSrc.X = playerSrc.Width * float32(playerFrame)
+	} else if frameCount % 45 == 1 {
+		playerFrame++
 	}
 
 	frameCount++
@@ -100,6 +101,11 @@ func update() {
 		playerFrame = 0
 	}
 
+	if !playerMoving && playerFrame > 1 {
+		playerFrame = 0
+	}
+    
+	playerSrc.X = playerSrc.Width * float32(playerFrame)
 	playerSrc.Y = playerSrc.Height * float32(playerDir)
 
 	rl.UpdateMusicStream(bkgSound)
@@ -144,7 +150,7 @@ func init() {
 	rl.PlayMusicStream(bkgSound)
 
 	cam = rl.NewCamera2D(rl.NewVector2(float32(screenWidth/2), float32(screenHeight/2)),
-		rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2)), 0.0, 2.0)
+		rl.NewVector2(float32(playerDest.X-playerDest.Width/2), float32(playerDest.Y-playerDest.Height/2)), 0.0, 2+.0)
 }
 
 func quit() {
