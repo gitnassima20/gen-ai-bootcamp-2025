@@ -48,3 +48,5 @@ wheels/
 *.egg
 
 node_modules
+
+listen-learn/data/audio
