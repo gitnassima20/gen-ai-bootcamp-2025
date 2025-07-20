@@ -1,0 +1,26 @@
+# Core backend
+numpy>=1.26.4
+streamlit==1.32.0  # Specific version to avoid API changes
+langchain>=0.1.16
+sentence-transformers>=2.7
+transformers>=4.41
+torch>=2.0
+faiss-cpu>=1.7.4  # Vector similarity search
+pydantic>=2.0.0  # For data models
+mistralai>=0.0.11  # For Mistral AI integration
+python-dotenv>=1.0.0  # For environment variables
+
+# Audio and TTS
+gTTS>=2.5.0  # Google Text-to-Speech
+streamlit-option-menu>=0.3.12  # Better navigation
+python-dotenv>=1.0.0  # For environment variables
+
+# ASR
+whisperx>=3.1
+youtube-transcript-api>=0.6
+
+
+# Tokenisation & utilities
+tiktoken>=0.6
+pydub>=0.25
+ffmpeg-python>=0.2
